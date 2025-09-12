@@ -9,3 +9,171 @@
     overflow-x: auto;
     position: relative;
 }
+
+/* FluentUI v9 DataGrid styling to match Dataverse OOB grids */
+.dataverse-grid {
+    font-family: "Segoe UI", "Fira Sans", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+    border: 1px solid #e5e5e5;
+    background-color: #ffffff;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.dataverse-grid .fui-DataGrid__row {
+    border-bottom: 1px solid #e5e5e5;
+    min-height: 36px;
+    height: 36px;
+}
+
+.dataverse-grid .fui-DataGrid__row:hover {
+    background-color: #f3f2f1;
+}
+
+.dataverse-grid .fui-DataGrid__row:hover .fui-DataGrid__cell {
+    background-color: #f3f2f1;
+}
+
+.dataverse-grid .fui-DataGrid__row:nth-child(even) {
+    background-color: #fafafa;
+}
+
+.dataverse-grid .fui-DataGrid__row:nth-child(even):hover {
+    background-color: #f3f2f1;
+}
+
+.dataverse-grid .fui-DataGrid__row:nth-child(even):hover .fui-DataGrid__cell {
+    background-color: #f3f2f1;
+}
+
+.dataverse-grid .fui-DataGrid__headerCell {
+    background-color: #f8f8f8;
+    border-bottom: 2px solid #e5e5e5;
+    border-right: 1px solid #e5e5e5;
+    font-weight: 600;
+    color: #323130;
+    padding: 8px 12px;
+    min-height: 36px;
+    height: 36px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Sort indicators */
+.dataverse-grid .fui-DataGrid__headerCell button {
+    color: #323130;
+    font-weight: 600;
+}
+
+.dataverse-grid .fui-DataGrid__headerCell [data-sort-direction] {
+    color: #0078d4;
+}
+
+.dataverse-grid .fui-DataGrid__cell {
+    border-right: 1px solid #e5e5e5;
+    padding: 8px 12px;
+    color: #323130;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 1px;
+    min-width: 0;
+}
+
+.dataverse-grid .fui-TableCellLayout {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Ensure span elements inside cells also show ellipses */
+.dataverse-grid .fui-TableCellLayout span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: top;
+}
+
+.dataverse-grid .fui-Link {
+    color: #0078d4;
+    text-decoration: none;
+}
+
+.dataverse-grid .fui-Link:hover {
+    color: #106ebe;
+    text-decoration: underline;
+}
+
+/* Selection and highlighting behaviors to match OOB Dataverse */
+
+/* Row selection highlighting - light blue background for selected rows */
+.dataverse-grid .fui-DataGrid__row[aria-selected="true"] {
+    background-color: #deecf9;
+}
+
+/* Selected row hover - darker blue to match Dataverse behavior */
+.dataverse-grid .fui-DataGrid__row[aria-selected="true"]:hover {
+    background-color: #0078d4;
+}
+
+/* Override FluentUI's default hover behavior for selected rows - high specificity */
+.dataverse-grid .fui-DataGrid__row[aria-selected="true"]:hover .fui-DataGrid__cell {
+    background-color: #0078d4;
+}
+
+.dataverse-grid .fui-DataGrid__row[aria-selected="true"]:hover .fui-DataGrid__cell .fui-TableCellLayout {
+    background-color: #0078d4;
+}
+
+/* Individual cell hover highlighting - darker than row hover */
+.dataverse-grid .fui-DataGrid__cell:hover {
+    background-color: #edebe9;
+    position: relative;
+}
+
+/* Cell hover on selected rows - should inherit the row's darker blue - high specificity */
+.dataverse-grid .fui-DataGrid__row[aria-selected="true"] .fui-DataGrid__cell:hover {
+    background-color: #0078d4;
+}
+
+.dataverse-grid .fui-DataGrid__row[aria-selected="true"] .fui-DataGrid__cell:hover .fui-TableCellLayout {
+    background-color: #0078d4;
+}
+
+/* Focused cell - black border like Dataverse covering entire cell */
+.dataverse-grid .fui-DataGrid__cell:focus,
+.dataverse-grid .fui-DataGrid__cell:focus-within,
+.dataverse-grid .fui-DataGrid__cell.focused-cell {
+    outline: 2px solid #323130;
+    outline-offset: -2px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Checkbox styling to match OOB */
+.dataverse-grid .fui-DataGrid__selectionCell {
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    padding: 8px 12px;
+    text-align: center;
+}
+
+.dataverse-grid .fui-DataGrid__selectionCell .fui-Checkbox {
+    margin: 0 auto;
+}
+
+/* Header checkbox styling */
+.dataverse-grid .fui-DataGrid__headerCell.fui-DataGrid__selectionCell {
+    background-color: #f8f8f8;
+    border-bottom: 2px solid #e5e5e5;
+    border-right: 1px solid #e5e5e5;
+}

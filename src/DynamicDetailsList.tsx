@@ -1,20 +1,30 @@
 import * as React from 'react';
-import { DetailsList, IColumn, DetailsListLayoutMode, Stack, ConstrainMode, SelectionMode, IDetailsListProps, IDetailsRowStyles, DetailsRow, getTheme, Spinner, SpinnerSize, Link, TooltipHost } from '@fluentui/react';
+import {
+  DataGrid,
+  DataGridBody,
+  DataGridRow,
+  DataGridHeader,
+  DataGridHeaderCell,
+  DataGridCell,
+  TableCellLayout,
+  TableColumnDefinition,
+  createTableColumn,
+  FluentProvider,
+  webLightTheme,
+  Text,
+  Link,
+  Spinner,
+  TableRowId
+} from '@fluentui/react-components';
 import { GetSampleData } from './GetSampleData';
-import { Text } from '@fluentui/react/lib/Text';
-import DynamicsWebApi = require('dynamics-web-api');
-import { ScrollablePane, ScrollbarVisibility } from '@fluentui/react';
-import format from 'date-fns/format';
+import { format } from 'date-fns';
 import { ExportToCSVUtil } from './GridExport';
 
 
-const theme = getTheme();
-// If true, this will use 3rd party Dynamics-Web-Api library instead of out of box Xrm Web Api
-const _useDynamicsWebApi: boolean = false;
+// Using FluentUI v9 theme
 
 const _LOOKUPLOGICALNAMEATTRIBUTE = "@Microsoft.Dynamics.CRM.lookuplogicalname";
 const _FORMATTEDVALUE = "@OData.Community.Display.V1.FormattedValue";
-const _ATTRIBUTENAME = "@OData.Community.Display.V1.AttributeName";
 
 // URL Placeholder is replaced with Dynamics365 Base URL (if available)
 const _BASE_ENVIRONMENT_URL_PLACEHOLDER = "[BASE_ENVIRONMENT_URL]";
@@ -26,9 +36,31 @@ const _USE_VALUE_URL_PLACEHOLDER = "[USE_VALUE]";
 // format options are here: https://date-fns.org/v2.29.3/docs/format
 const _DEFAULT_DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
 
+// Interface for FluentUI v8 style column (what we receive from JSON)
+interface ILegacyColumn {
+    key: string;
+    fieldName: string;
+    name: string;
+    minWidth?: number;
+    maxWidth?: number;
+    data?: {
+        joinValuesFromTheseFields?: string[];
+        dateFormat?: string;
+        entityLinking?: boolean;
+        url?: string;
+        urlLinkText?: string;
+    };
+}
+
+// Type for the column data structure that comes from JSON parsing
+interface IColumnDataStructure {
+    default?: ILegacyColumn[];
+    [key: string]: any;
+}
+
 export interface IDynamicDetailsListProps {
     items: any[];
-    columns: IColumn[];
+    columns: IColumnDataStructure | ILegacyColumn[] | TableColumnDefinition<any>[];
     fetchXml?: string;
     rootEntityName?: string;
     announcedMessage?: string;
@@ -36,25 +68,152 @@ export interface IDynamicDetailsListProps {
 }
 
 export interface IDynamicDetailsListState {
-    columns: IColumn[];
-    items: any[]; //Record<string, string>[] //any[];
+    columns: TableColumnDefinition<any>[];
+    items: any[];
     fetchXml?: string;
     primaryEntityName?: string;
     announcedMessage?: string;
     baseEnvironmentUrl?: string;
+    selectedRowIds: Set<TableRowId>;
+    focusedCellId?: string;
 }
 
 export class DynamicDetailsList extends React.Component<any, IDynamicDetailsListState> {
     private _allItems: any[];
-    private _columns: any;
+    private _columns: TableColumnDefinition<any>[];
     private _pcfContext: any;
-    private _webApi: DynamicsWebApi;
     private _primaryEntityName: string;
     private _fetchXml: string;
     private _announcedMessage: string;
-    private _currentPageNumber: number;
     private _isDebugMode: boolean;
     private _baseEnvironmentUrl?: string;
+
+    // Helper function to normalize column data from various formats
+    private normalizeColumns(columns: any): ILegacyColumn[] {
+        if (!columns) return [];
+        
+        // If it has a 'default' property, use that (JSON parsed structure)
+        if (columns.default && Array.isArray(columns.default)) {
+            return columns.default as ILegacyColumn[];
+        }
+        
+        // If it's already an array, use it directly
+        if (Array.isArray(columns)) {
+            return columns as ILegacyColumn[];
+        }
+        
+        // If it's an object with numeric keys, convert to array
+        if (typeof columns === 'object' && columns.length !== undefined) {
+            const result: ILegacyColumn[] = [];
+            for (let i = 0; i < columns.length; i++) {
+                if (columns[i]) {
+                    result.push(columns[i]);
+                }
+            }
+            return result;
+        }
+        
+        return [];
+    }
+
+    // Convert legacy columns to FluentUI v9 TableColumnDefinition
+    private convertToTableColumns(legacyColumns: ILegacyColumn[]): TableColumnDefinition<any>[] {
+        return legacyColumns.map((column: ILegacyColumn) =>
+            createTableColumn<any>({
+                columnId: column.key || column.fieldName,
+                renderHeaderCell: () => <span title={column.name}>{column.name}</span>,
+                renderCell: (item: any) => this._renderItemColumn(item, undefined, column),
+                compare: (a: any, b: any) => this.compareValues(a, b, column),
+            })
+        );
+    }
+
+    // Enhanced sorting logic that handles dates, strings, numbers, and nulls properly
+    private compareValues(a: any, b: any, column: ILegacyColumn): number {
+        let aValue = a[column.fieldName];
+        let bValue = b[column.fieldName];
+
+        // Handle combined fields - use the first non-null value from joinValuesFromTheseFields
+        if (column.data && column.data.joinValuesFromTheseFields) {
+            aValue = null;
+            bValue = null;
+            
+            // Find first non-null value for a
+            for (const fieldName of column.data.joinValuesFromTheseFields) {
+                if (a[fieldName] !== null && a[fieldName] !== undefined && a[fieldName] !== '') {
+                    aValue = a[fieldName];
+                    break;
+                }
+            }
+            
+            // Find first non-null value for b
+            for (const fieldName of column.data.joinValuesFromTheseFields) {
+                if (b[fieldName] !== null && b[fieldName] !== undefined && b[fieldName] !== '') {
+                    bValue = b[fieldName];
+                    break;
+                }
+            }
+        }
+
+        // Use formatted values if available (like _Formatted fields)
+        const aFormatted = a[column.key + _FORMATTEDVALUE];
+        const bFormatted = b[column.key + _FORMATTEDVALUE];
+        if (aFormatted !== undefined) aValue = aFormatted;
+        if (bFormatted !== undefined) bValue = bFormatted;
+
+        // Handle nulls/undefined - put them at the top like Dataverse
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return -1;
+        if (bValue == null) return 1;
+
+        // Handle empty strings - put them at the top like nulls
+        if (aValue === '' && bValue === '') return 0;
+        if (aValue === '') return -1;
+        if (bValue === '') return 1;
+
+        // If this column has dateFormat, treat as dates
+        if (column.data?.dateFormat) {
+            const aDate = new Date(aValue);
+            const bDate = new Date(bValue);
+            
+            // Check for invalid dates
+            if (isNaN(aDate.getTime()) && isNaN(bDate.getTime())) return 0;
+            if (isNaN(aDate.getTime())) return 1;
+            if (isNaN(bDate.getTime())) return -1;
+            
+            return aDate.getTime() - bDate.getTime();
+        }
+
+        // Try to parse as numbers if they look like numbers
+        const aNum = parseFloat(aValue);
+        const bNum = parseFloat(bValue);
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            return aNum - bNum;
+        }
+
+        // Default to string comparison (case-insensitive)
+        return aValue.toString().toLowerCase().localeCompare(bValue.toString().toLowerCase());
+    }
+
+    // Handle cell click - select row and focus cell (Dataverse behavior)
+    private handleCellClick = (item: any, column: ILegacyColumn, event: React.MouseEvent) => {
+        const rowId = item[this._primaryEntityName + "id"] || Math.random().toString();
+        const cellId = `${rowId}-${column.key}`;
+        
+        // Don't change selection if clicking on a checkbox
+        const target = event.target as HTMLElement;
+        if ((target as HTMLInputElement).type === 'checkbox' || target.closest('input[type="checkbox"]')) {
+            return;
+        }
+
+        // Select only this row (clear others) - Dataverse behavior
+        const newSelection = new Set<string>([rowId]);
+        this.setState({
+            selectedRowIds: newSelection,
+            focusedCellId: cellId
+        });
+    }
 
     constructor(props: any) {
         super(props);
@@ -63,10 +222,12 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
         this._primaryEntityName = props.primaryEntityName;
         this._fetchXml = props.fetchXml;
         this._allItems = props.items;
-        this._columns = props.columns;
+        
+        // Normalize and convert columns to FluentUI v9 format
+        const normalizedColumns = this.normalizeColumns(props.columns);
+        this._columns = this.convertToTableColumns(normalizedColumns);
         this._isDebugMode = props.isDebugMode;
         this._baseEnvironmentUrl = props.baseD365Url;
-        this._currentPageNumber = 1;
 
         // Debug mode will console log all important settings including fetchXml, column layout, set debugger breakpoint
         if (this._isDebugMode) {
@@ -80,101 +241,40 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
         // Don't bother with Web Api if we aren't actually fetching data
         // This way we can quickly see changes in the PCF Test harness and not have to endure a full deploy cycle
         // Test harness will not have FetchXml input variable available when debugging in test harness
-        if (props.fetchXml) {
+        if (props.fetchXml && this._columns && this._columns.length > 0) {
 
-            // columnLayout with click handler added
-            // set ariaLabel to column.name to see the full column name when hovering over header columns
-            // setting isResizable globally to reduce layout size
-            this._columns = this._columns.map((column: IColumn) => ({
-                ...column,
-                ariaLabel: column.name,
-                flexGrow: 1,
-                isResizable: true,
-                onColumnClick: this._onColumnClick,
-            }));
-
-            if (this._isDebugMode) {
-                console.log(`useDynamicsWebApi: ${_useDynamicsWebApi}`);
-            }
-
-            // 3rd party DynamicsWebApi library allows access to the _Formatted items
-            if (_useDynamicsWebApi) {
-                this._webApi = new DynamicsWebApi(
-                    {
-                        dataApi: { version: '9.0' },
-                        useEntityNames: true
-                    });
-
-                this._webApi.executeFetchXml(this._primaryEntityName, this._fetchXml, "*", this._currentPageNumber, undefined, undefined)
-                    .then((data) => {
-                        // this._pagingCookie = data["@Microsoft.Dynamics.CRM.fetchxmlpagingcookie"];
-                        // this._totalNumberOfRecords =  data.count;
-                        // Sometimes data is an array[]                
-                        if (data && data.value && data.value.length > 0) {
-                            this._allItems = data.value;
-
-                            if (this._isDebugMode) {
-                                console.log('DynamicsWebApi.executeFetchXml : this._allItems', this._allItems);
-                            }
-
-                            this.setState(
-                                {
-                                    items: this._allItems,
-                                    columns: this._columns,
-                                    //announcedMessage: "Actual FetchXml Response used."
-                                }
-                            );
-                        }
-                        else {
-                            this._announcedMessage = 'Query returned no results.';
-                            this.setState({
-                                announcedMessage: this._announcedMessage
-                            });
-                        }
-                    }).catch((e) => {
+            // Use the standard Xrm Web Api
+            this._pcfContext.webAPI.retrieveMultipleRecords(this._primaryEntityName, "?fetchXml=" + encodeURIComponent(this._fetchXml)).then(
+                (results: any) => {
+                    if (results && results.entities && results.entities.length > 0) {
+                        this._allItems = results.entities;
                         if (this._isDebugMode) {
-                            console.log(e);
-                            debugger; // eslint-disable-line no-debugger
+                            console.log('webAPI.retrieveMultipleRecords : this._allItems', this._allItems);
                         }
-                        this.setState({
-                            announcedMessage: `Error fetching records. ${e.message}`
-                        });
-                    });
-            }
-            else {
-                // use the regular out of the box Web Api
-                this._pcfContext.webAPI.retrieveMultipleRecords(this._primaryEntityName, "?fetchXml=" + encodeURIComponent(this._fetchXml)).then(
-                    (results: any) => {
-                        if (results && results.entities && results.entities.length > 0) {
-                            this._allItems = results.entities;
-                            if (this._isDebugMode) {
-                                console.log('webAPI.retrieveMultipleRecords : this._allItems', this._allItems);
+                        this.setState(
+                            {
+                                items: this._allItems,
+                                columns: this._columns,
+                                //announcedMessage: "Actual FetchXml Response used."
                             }
-                            this.setState(
-                                {
-                                    items: this._allItems,
-                                    columns: this._columns,
-                                    //announcedMessage: "Actual FetchXml Response used."
-                                }
-                            );
-                        }
-                        else {
-                            this._announcedMessage = "Query returned no results.";
-                            this.setState({
-                                announcedMessage: this._announcedMessage
-                            });
-                        }
-                    },
-                    (e: any) => {
-                        if (this._isDebugMode) {
-                            console.log(e);
-                            debugger; // eslint-disable-line no-debugger
-                        }
+                        );
+                    }
+                    else {
+                        this._announcedMessage = "Query returned no results.";
                         this.setState({
-                            announcedMessage: `Error fetching records. ${e.message}`
+                            announcedMessage: this._announcedMessage
                         });
+                    }
+                },
+                (e: any) => {
+                    if (this._isDebugMode) {
+                        console.log(e);
+                        debugger; // eslint-disable-line no-debugger
+                    }
+                    this.setState({
+                        announcedMessage: `Error fetching records. ${e.message}`
                     });
-            }
+                });
         }
         // If we don't have a query or any data, use sample data
         else if (!props.fetchXml || !props.dataItems || props.dataItems.length < 1) {
@@ -186,36 +286,11 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
 
             if (sampleData.dataItems && sampleData.dataItems.length > 0) {
                 this._allItems = sampleData.dataItems;
-                this._columns = sampleData.columns;
                 this._primaryEntityName = sampleData.primaryEntityName;
-
-                // columnLayout with click handler added
-                // set ariaLabel to column.name to see the full column name when hovering over header columns
-                // setting isResizable globally to reduce layout size
-                this._columns = this._columns.map((column: IColumn) => ({
-                    ...column,
-                    ariaLabel: column.name,
-                    flexGrow: 1,
-                    isResizable: true,
-                    onColumnClick: this._onColumnClick,
-                }));
-                /*
-                 // Or if you want more control over which IColumn properties are supported
-                 this._columns = this._columns.map((column: IColumn) => ({
-                     key: column.key,
-                     name: column.name,
-                     ariaLabel: column.name,
-                     fieldName: column.fieldName,
-                     minWidth: column.minWidth,
-                     flexGrow: 1,
-                     //maxWidth: 200,
-                     isResizable: true,
-                     data: column.data,
-                     // Sorting
-                     onColumnClick: this._onColumnClick,
-                     // Handle rendering lookup field links
-                 }));
-                 */
+                
+                // Normalize and convert sample data columns
+                const normalizedColumns = this.normalizeColumns(sampleData.columns);
+                this._columns = this.convertToTableColumns(normalizedColumns);
 
                 this._announcedMessage = "Using sample data...";
                 this.setState({
@@ -234,12 +309,12 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
             items: this._allItems,
             columns: this._columns,
             fetchXml: this._fetchXml,
-            announcedMessage: this._announcedMessage
+            announcedMessage: this._announcedMessage,
+            selectedRowIds: new Set<string>(),
+            focusedCellId: undefined
         };
     }
 
-    public componentDidUpdate(previousProps: any, previousState: IDynamicDetailsListProps) {
-    }
 
     // FluentUI DetailsList documentation:
     // https://developer.microsoft.com/en-us/fluentui#/controls/web/detailslist
@@ -247,145 +322,144 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
     // But seems to not play super nice with the PCF Test Harness as it can overlay the fields on the left side
     public render(): JSX.Element {
         const { columns, items, announcedMessage } = this.state;
-        // if (this._isDebugMode) { console.log(items); }
-        let isSubgrid: boolean = true;
-        if (items) {
+        
+        if (items && columns && columns.length > 0) {
             return (
-                // This version works great as long as your FetchXml Details List subgrid is the only thing on the tab
-                // Otherwise this will overlay any other controls following the anchor text field
-                <>
-                    <Stack>
+                <FluentProvider theme={webLightTheme}>
+                    <div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
                         {announcedMessage && (
-                            <Stack.Item align="center">
+                            <div style={{ textAlign: 'center', marginBottom: '10px' }}>
                                 <Text>{announcedMessage}</Text>
-                            </Stack.Item>
+                            </div>
                         )}
-                        <ScrollablePane scrollbarVisibility={ScrollbarVisibility.auto} style={{ top: '5px', zIndex: 0, bottom: '5px' }}>
-                            <Stack.Item>
-                                <DetailsList
-                                    items={items}
-                                    columns={columns}
-                                    //layoutMode={DetailsListLayoutMode.fixedColumns}
-                                    compact={true}
-                                    selectionMode={SelectionMode.none}
-                                    isHeaderVisible={true}
-                                    constrainMode={ConstrainMode.unconstrained}
-                                    onRenderRow={this._onRenderRow}
-                                    onRenderDetailsHeader={this._onRenderDetailsHeader}
-                                    // Custom Rendering to support entity linking, Absolute Urls, formatted dates, etc.
-                                    onRenderItemColumn={this._renderItemColumn}
-                                    // Double clicking a row opens the record in Model Driven App
-                                    // PCF test harness will instead give error "Your control is trying to open a form. This is not yet supported."
-                                    onItemInvoked={(item: any) => {
-                                        this._pcfContext.navigation.openForm({
-                                            entityName: this._primaryEntityName,
-                                            entityId: item[this._primaryEntityName + "id"]
-                                        });
-                                    }}
-                                />
-                            </Stack.Item>
-                            <Stack.Item align="start" >
-                                <Text>Total Records: {items.length} ...  </Text>
-                                <Link onClick={() => ExportToCSVUtil(items, `export.${Date.now()}.csv`)}>[ Export dataset to CSV ] </Link>
-                            </Stack.Item>
-                        </ScrollablePane>
-                    </Stack >
-                </>
-                /* // This version fixes the overlay issue by fitting it neatly into the section container
-                   // But if you have more than 4 rows, you will be scrolling a bunch since it's backed by a single line text field
-                   // Perhaps a workaround might be to use a multi line text field in the section and set the number of lines to auto expend?
-                <>
-                    <Stack grow verticalFill className="container" style={{ height: "100%", width: "100%" }}>
-                        {announcedMessage && (
-                            <Stack.Item align="center">
-                                <Text>{announcedMessage}</Text>
-                            </Stack.Item>
-                        )}
-                        <Stack.Item grow className="gridContainer">
-                            <ScrollablePane scrollbarVisibility={ScrollbarVisibility.auto} >
-                                <DetailsList
-                                    items={items}
-                                    columns={columns}
-                                    // layoutMode={DetailsListLayoutMode.fixedColumns}
-                                    compact={true}
-                                    selectionMode={SelectionMode.none}
-                                    isHeaderVisible={true}
-                                    // constrainMode={ConstrainMode.unconstrained}
-                                    onRenderRow={this._onRenderRow}
-                                    onRenderDetailsHeader={this._onRenderDetailsHeader}
-                                    // Custom Rendering to support entity linking, Absolute Urls, formatted dates, etc.
-                                    onRenderItemColumn={this._renderItemColumn}
-                                    // Double clicking a row opens the record in Model Driven App
-                                    // PCF test harness will instead give error "Your control is trying to open a form. This is not yet supported."
-                                    onItemInvoked={(item: any) => {
-                                        this._pcfContext.navigation.openForm({
-                                            entityName: this._primaryEntityName,
-                                            entityId: item[this._primaryEntityName + "id"]
-                                        });
-                                    }}
-                                />
-                            </ScrollablePane>
-                        </Stack.Item>
-                        <Stack.Item align="start" >
+                        <DataGrid
+                            items={items}
+                            columns={columns}
+                            sortable
+                            selectionMode="multiselect"
+                            getRowId={(item: any) => item[this._primaryEntityName + "id"] || Math.random().toString()}
+                            selectedItems={Array.from(this.state.selectedRowIds)}
+                            onSelectionChange={(e, data) => {
+                                // Update our state to match the selection from checkboxes
+                                this.setState({ 
+                                    selectedRowIds: new Set(Array.from(data.selectedItems))
+                                });
+                            }}
+                            className="dataverse-grid"
+                        >
+                            <DataGridHeader>
+                                <DataGridRow>
+                                    {({renderHeaderCell}: any) => <DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>}
+                                </DataGridRow>
+                            </DataGridHeader>
+                            <DataGridBody>
+                                {({item, rowId}: any) => (
+                                    <DataGridRow 
+                                        key={rowId}
+                                        onDoubleClick={() => {
+                                            this._pcfContext.navigation.openForm({
+                                                entityName: this._primaryEntityName,
+                                                entityId: (item as any)[this._primaryEntityName + "id"]
+                                            });
+                                        }}
+                                    >
+                                        {({renderCell}: any) => <DataGridCell>{renderCell(item)}</DataGridCell>}
+                                    </DataGridRow>
+                                )}
+                            </DataGridBody>
+                        </DataGrid>
+                        <div style={{ marginTop: '10px', textAlign: 'left' }}>
                             <Text>Total Records: {items.length} ...  </Text>
-                            <Link onClick={() => ExportToCSVUtil(items, `export.${Date.now()}.csv`)}>[ Export dataset to CSV ] </Link>
-                        </Stack.Item>
-                    </Stack >
-                </>
-                */
+                            <Link onClick={() => ExportToCSVUtil(items, `export.${Date.now()}.csv`)}>[ Export dataset to CSV ]</Link>
+                        </div>
+                    </div>
+                </FluentProvider>
             );
         }
         else if (announcedMessage) {
             return (
-                <Stack horizontal={true} verticalAlign={'center'} >
-                    <Text>{announcedMessage}</Text>
-                </Stack>
+                <FluentProvider theme={webLightTheme}>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <Text>{announcedMessage}</Text>
+                    </div>
+                </FluentProvider>
             );
         }
         else {
             return (
-                <Stack horizontal={true} verticalAlign={'center'} >
-                    <Spinner label="Loading Grid" size={SpinnerSize.medium} />
-                </Stack>
+                <FluentProvider theme={webLightTheme}>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <Spinner label="Loading Grid" />
+                    </div>
+                </FluentProvider>
             );
         }
     }
 
-    private _renderItemColumn = (item: any, index: number | undefined, column: any): any => {
-        // const fieldContent = item[column.fieldName as keyof any] as string;
+    private _renderItemColumn = (item: any, _index: number | undefined, column: ILegacyColumn): JSX.Element => {
         let fieldContent = item[column.fieldName];
         if (item[column.key + _FORMATTEDVALUE]) {
             fieldContent = item[column.key + _FORMATTEDVALUE];
         }
-        // console.log(fieldContent, column, column.data);
+        
+        const rowId = item[this._primaryEntityName + "id"] || Math.random().toString();
+        const cellId = `${rowId}-${column.key}`;
+        const isFocused = this.state.focusedCellId === cellId;
         
         // Support joining more than one field into one table field    
         if (column.data && column.data.joinValuesFromTheseFields) {
-            //debugger;
-
             let finalFieldContent = fieldContent ? fieldContent : "";
             column.data.joinValuesFromTheseFields.forEach((extraFieldName: string) => {
                 let extrafieldContent = item[extraFieldName];
-                //if (item[column.data.alsoJoinTheseFields + _FORMATTEDVALUE]) {
-                //    extrafieldContent = item[column.data.joinValuesFromTheseFields + _FORMATTEDVALUE];
-                //}
-                // TODO: Make delimiter configurable
-                // TODO: Don't show Undefined for empty items
                 let delimiter = "; "; 
                 if(extrafieldContent && extrafieldContent != null) {
                     finalFieldContent = finalFieldContent != "" ? `${finalFieldContent}${delimiter}${extrafieldContent}` : extrafieldContent;
                 }
             });
 
-            return this.renderItem(finalFieldContent, item, column);
+            return (
+                <TableCellLayout 
+                    title={finalFieldContent?.toString() || ''}
+                    tabIndex={0}
+                    onClick={(e) => {
+                        this.handleCellClick(item, column, e);
+                        // Add focused class to the parent cell
+                        const cell = (e.target as HTMLElement).closest('.fui-DataGrid__cell');
+                        if (cell) {
+                            // Remove focused class from all cells
+                            document.querySelectorAll('.fui-DataGrid__cell.focused-cell').forEach(el => el.classList.remove('focused-cell'));
+                            // Add focused class to clicked cell
+                            cell.classList.add('focused-cell');
+                        }
+                    }}
+                >
+                    {this.renderItem(finalFieldContent, item, column)}
+                </TableCellLayout>
+            );
         }
 
-        return this.renderItem(fieldContent, item, column);
-
-     
+        return (
+            <TableCellLayout 
+                title={fieldContent?.toString() || ''}
+                tabIndex={0}
+                onClick={(e) => {
+                    this.handleCellClick(item, column, e);
+                    // Add focused class to the parent cell
+                    const cell = (e.target as HTMLElement).closest('.fui-DataGrid__cell');
+                    if (cell) {
+                        // Remove focused class from all cells
+                        document.querySelectorAll('.fui-DataGrid__cell.focused-cell').forEach(el => el.classList.remove('focused-cell'));
+                        // Add focused class to clicked cell
+                        cell.classList.add('focused-cell');
+                    }
+                }}
+            >
+                {this.renderItem(fieldContent, item, column)}
+            </TableCellLayout>
+        );
     }
 
-    private renderItem = (fieldContent: any, item: any,  column: any): any => {
+    private renderItem = (fieldContent: any, item: any, column: ILegacyColumn): any => {
         if (item[column.key] || fieldContent) {           
             // Handle any custom Date Formats via date=fns format string
             // DateFormat string options are here: https://date-fns.org/v2.29.3/docs/format
@@ -416,7 +490,7 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
             // "data" : { "url": "[USE_VALUE]" }
             if (column.data && column.data.url == _USE_VALUE_URL_PLACEHOLDER) {
                 let linkText = (column.data.urlLinkText && column.data.urlLinkText == _USE_VALUE_URL_PLACEHOLDER) ? fieldContent :
-                    column.data.urlLinkText && column.data.urlLinkTextfieldContent != "" ? column.data.urlLinkText :
+                    column.data.urlLinkText && fieldContent != "" ? column.data.urlLinkText :
                         "External Link";
                 return (<Link key={item} href={fieldContent} target="_blank">{linkText}</Link>);
             }
@@ -427,10 +501,10 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
             //  "data": {  "url": "[BASED365URL]/main.aspx?etc=1010&pagetype=entityrecord&id=[ID]"  }
             else if (column.data && column.data.url && column.data.url !== "") {
                 let url = column.data.url
-                    .replace(_BASE_ENVIRONMENT_URL_PLACEHOLDER, this._baseEnvironmentUrl)
+                    .replace(_BASE_ENVIRONMENT_URL_PLACEHOLDER, this._baseEnvironmentUrl || '')
                     .replace(_RECORD_ID_URL_PLACEHOLDER, item[column.key]);
                 let linkText = (column.data.urlLinkText && column.data.urlLinkText == _USE_VALUE_URL_PLACEHOLDER) ? fieldContent :
-                    column.data.urlLinkText && column.data.urlLinkTextfieldContent != "" ? column.data.urlLinkText :
+                    column.data.urlLinkText && fieldContent != "" ? column.data.urlLinkText :
                         "Link";
                 return (<Link key={item} href={url} target="_blank">{linkText}</Link>);
             }
@@ -459,61 +533,5 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
         }
     }
 
-    private _onColumnClick = (ev: React.MouseEvent<HTMLElement>, column: IColumn): void => {
-        // Handle sorting
-        const { columns, items } = this.state;
-        const newColumns: IColumn[] = columns.slice();
-        const currColumn: IColumn = newColumns.filter(currCol => column.key === currCol.key)[0];
-        newColumns.forEach((newCol: IColumn) => {
-            if (newCol === currColumn) {
-                currColumn.isSortedDescending = !currColumn.isSortedDescending;
-                currColumn.isSorted = true;
-                if (this._isDebugMode) {
-                    console.log(`${currColumn.name} is sorted ${currColumn.isSortedDescending ? 'descending' : 'ascending'} `);
-                }
-                //this.setState({
-                //    announcedMessage: `${currColumn.name} is sorted ${currColumn.isSortedDescending ? 'descending' : 'ascending'} `,
-                //});
-            } else {
-                newCol.isSorted = false;
-                newCol.isSortedDescending = true;
-            }
-        });
-        const newItems = _copyAndSort(items, currColumn.fieldName!, currColumn.isSortedDescending);
-        this.setState({
-            columns: newColumns,
-            items: newItems,
-        });
-
-        function _copyAndSort<T>(items: T[], columnKey: string, isSortedDescending?: boolean): T[] {
-            const key = columnKey as keyof T;
-            return items.slice(0).sort((a: T, b: T) => ((isSortedDescending ? a[key] < b[key] : a[key] > b[key]) ? 1 : -1));
-        }
-    };
-
-
-    private _onRenderDetailsHeader(props: any, defaultRender?: any) {
-        return defaultRender!({
-            ...props,
-            onRenderColumnHeaderTooltip: (tooltipHostProps: any) => {
-                return (
-                    <TooltipHost {...tooltipHostProps} />
-                )
-            }
-        });
-    }
-
-    private _onRenderRow: IDetailsListProps['onRenderRow'] = props => {
-        const customStyles: Partial<IDetailsRowStyles> = {};
-        if (props) {
-            if (props.itemIndex % 2 === 0) {
-                // Every other row renders with a different background color
-                customStyles.root = { backgroundColor: theme.palette.themeLighterAlt };
-            }
-
-            return <DetailsRow {...props} styles={customStyles} />;
-        }
-        return null;
-    };
 
 }

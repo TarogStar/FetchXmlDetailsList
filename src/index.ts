@@ -1,26 +1,17 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import * as React from "react";
-import ReactDOM = require("react-dom");
-import { GetSampleData } from "./GetSampleData";
 import { DynamicDetailsList } from "./DynamicDetailsList";
-import { IColumn } from "@fluentui/react";
+import { TableColumnDefinition } from "@fluentui/react-components";
 
 export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInputs, IOutputs> {
-    private theComponent: ComponentFramework.ReactControl<IInputs, IOutputs>;
-    private notifyOutputChanged: () => void;
-
     private _primaryEntityName: string;
     private _fetchXML: string | null;
-    private _columnLayout: Array<IColumn>;
+    private _columnLayout: Array<TableColumnDefinition<any>>;
     private _isDebugMode: boolean;
     private _baseEnvironmentUrl?: string;
-    private _itemsPerPage: number | null;
-    // private _totalNumberOfRecords: number;    
 
      /** General */
      private _context: ComponentFramework.Context<IInputs>;
-     private _notifyOutputChanged: () => void;
-     private _container: HTMLDivElement;
 
     /**
      * Empty constructor.
@@ -40,16 +31,12 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
         state: ComponentFramework.Dictionary, 
         container: HTMLDivElement
     ): void {
-        this.notifyOutputChanged = notifyOutputChanged;      
-        this.initVars(context, notifyOutputChanged, container);
+        this.initVars(context);
     }
 
-    private initVars(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, container: HTMLDivElement): void {
+    private initVars(context: ComponentFramework.Context<IInputs>): void {
         this._context = context;
-        this._notifyOutputChanged = notifyOutputChanged;
-        this._container = container;
         this._isDebugMode = false;
-        this._itemsPerPage = 5000;
         
         if (this._context.parameters.DebugMode) {
             this._isDebugMode = this._context.parameters.DebugMode.raw == "1";
@@ -60,22 +47,15 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
         //    debugger;  // eslint-disable-line no-debugger        
         //}
 
-        if (this._context.parameters.ItemsPerPage) {
-            this._itemsPerPage = this._context.parameters.ItemsPerPage.raw;
-        }
         
         // TODO: Validate the input parameters to make sure we get a friendly error instead of weird errors
         var fetchXML : string | null = this._context.parameters.FetchXml.raw; 
         var recordIdPlaceholder : string | null = this._context.parameters.RecordIdPlaceholder.raw; // ?? "";  
     
-        // This is just the simple control where the subgrid will be placed on the form
-        var controlAnchorField : string | null = this._context.parameters.ControlAnchorField.raw;
         // const recordIdLookupValue: ComponentFramework.EntityReference = this._context.parameters.RecordId.raw[0];
 
         // Other values if we need them
         let entityId = (<any>this._context.mode).contextInfo.entityId;
-        let entityTypeName = (<any>this._context.mode).contextInfo.entityTypeName;
-        let entityDisplayName = (<any>this._context.mode).contextInfo.entityRecordName;
         // This breaks when you use the PCF Test Harness.  Neat!
         try{
             this._baseEnvironmentUrl = (<any>this._context)?.page?.getClientUrl();
@@ -179,7 +159,7 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
     public updateView(context: ComponentFramework.Context<IInputs>): React.ReactElement {
         // debugger;  // eslint-disable-line no-debugger
         let props = {  columns: this._columnLayout, primaryEntityName: this._primaryEntityName, fetchXml: this._fetchXML, isDebugMode: this._isDebugMode, context: context, baseD365Url: this._baseEnvironmentUrl };
-        return React.createElement(DynamicDetailsList, props, {});
+        return React.createElement(DynamicDetailsList, props);
 
         // TODO: Is it possible to support a grid without a columnlayout?
         // i.e. Create a default columnListLayout from the data

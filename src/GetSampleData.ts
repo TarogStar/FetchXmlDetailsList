@@ -15,7 +15,5 @@ export function GetSampleData() {
     // Use following for Sample Connections dataset
     return { dataItems : sampleResponseData.value, columns : sampleResponseColumnLayout, primaryEntityName : 'connection' };
 
-    // For dynamics-web-api response without value node
-    // return { dataItems : sampleResponseData,  columns : sampleResponseColumnLayout,  primaryEntityName : 'account' };
 
   }

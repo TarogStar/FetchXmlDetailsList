@@ -264,34 +264,6 @@ The response to the FetchXml get multiple query should have details in it which 
 `prefer: odata.include-annotations="*"`  Enable DebugMode and check the F11 console log.  This will give you a good idea how to include columns for the ColumnLayoutJson.
 
 # Issues
-## Dynamics-Web-Api library initial set up issue
-For ease of use, this control can be switched to use the dynamics-web-api library.  You can reference the field name with the _Formatted suffix.  But the default is to just use the out of the box xrm web api.
-
-But there seems to be an issue with this dynamics-web-api 3rd party library. Initially it may give a strange crypto error:
-
-`ERROR in ./node_modules/dynamics-web-api/lib/utilities/Utility.js 2:14-31
-Module not found: Error: Can't resolve 'crypto' in 'C:\Projects\Web\FetchXmlDetailsList\node_modules\dynamics-web-api\lib\utilities'`
-
-I am considering removing dynamics-web-api support as the out of the box Web Api works fine.  For now you can fix it by editing the webpackConfig.js for pcf-scripts to tell it to ignore it.
-
-../FetchXmlDetailsList/node_modules/pcf-scripts/webpackConfig.js#L61
-
-Change this:
-```javascript
-resolve: {
-        // Tell webpack which extensions to try when it is looking for a file.
-        extensions: ['.ts', '.tsx', '.js', '.jsx'],
-},
-```
-
-to this:
-```javascript
-resolve: {
-        // Tell webpack which extensions to try when it is looking for a file.
-        extensions: ['.ts', '.tsx', '.js', '.jsx'],
-       fallback: { "crypto": false },
-},
-```
 
 ---
 
