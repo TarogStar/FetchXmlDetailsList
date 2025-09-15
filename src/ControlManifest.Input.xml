@@ -1,8 +1,7 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest>
   <!-- Manifest schema reference: https://learn.microsoft.com/en-us/power-apps/developer/component-framework/manifest-schema-reference/ -->
-  <control namespace="Schiavone" constructor="FetchXmlDetailsList" version="0.0.13" display-name-key="FetchXml DetailsList" 
-  description-key="Control generates a FluentUI DetailsList for subgrids loaded via a custom FetchXml query and column layout" control-type="virtual" preview-image="../img/Preview.png" >
+  <control namespace="Schiavone" constructor="FetchXmlDetailsList" version="0.0.16" display-name-key="FetchXml DetailsList" description-key="Control generates a FluentUI DetailsList for subgrids loaded via a custom FetchXml query and column layout" control-type="virtual" preview-image="../img/Preview.png">
     <!--external-service-usage node declares whether this 3rd party PCF control is using external service or not, if yes, this control will be considered as premium and please also add the external domain it is using.
     If it is not using any external service, please set the enabled="false" and DO NOT add any domain below. The "enabled" will be false by default.
     Example1:
@@ -13,44 +12,20 @@
       <external-service-usage enabled="false">
       </external-service-usage>
     -->
-    <type-group name="SupportedFields">
-      <type>SingleLine.Text</type>
-      <type>SingleLine.TextArea</type>
-      <type>Multiple</type>
-    </type-group>
-
+    <!-- dataset node represents a set of entity records on CDS; allow more than one datasets -->
+    <!-- <data-set name="sampleDataSet" display-name-key="Dataset_Display_Key"> -->
+    <!-- 'property-set' node represents a unique, configurable property that each record in the dataset must provide. -->
+    <!-- UNCOMMENT TO ADD PROPERTY-SET NODE
+      <property-set name="samplePropertySet" display-name-key="Property_Display_Key" description-key="Property_Desc_Key" of-type="SingleLine.Text" usage="bound" required="true" />
+      -->
+    <!-- </data-set> -->
+    <!-- Property schema reference: https://learn.microsoft.com/en-us/power-apps/developer/component-framework/manifest-schema-reference/property -->
     <external-service-usage enabled="false">
       <!--UNCOMMENT TO ADD EXTERNAL DOMAINS
       <domain></domain>
       <domain></domain>
       -->
     </external-service-usage>
-    <!-- dataset node represents a set of entity records on CDS; allow more than one datasets -->
-    <!-- <data-set name="sampleDataSet" display-name-key="Dataset_Display_Key"> -->
-      <!-- 'property-set' node represents a unique, configurable property that each record in the dataset must provide. -->
-      <!-- UNCOMMENT TO ADD PROPERTY-SET NODE
-      <property-set name="samplePropertySet" display-name-key="Property_Display_Key" description-key="Property_Desc_Key" of-type="SingleLine.Text" usage="bound" required="true" />
-      -->
-    <!-- </data-set> -->
-    <!-- Property schema reference: https://learn.microsoft.com/en-us/power-apps/developer/component-framework/manifest-schema-reference/property -->
-    <property name="FetchXml" display-name-key="FetchXml Query" description-key="FetchXml Query with RecordId Placeholder in Filter" of-type="Multiple" usage="input" required="true" />
-    <property name="RecordIdPlaceholder" display-name-key="RecordId Placeholder" description-key="Will be replaced with RecordId. ie. [RECORDID] " of-type="SingleLine.Text" usage="input" required="true" default-value="[RECORDID]" />
-    <property name="ControlAnchorField" display-name-key="ControlAnchorField" description-key="Dummy text field used to place grid." of-type-group="SupportedFields" usage="bound" required="true" />
-    <property name="OverriddenRecordIdFieldName" display-name-key="Overridden RecordId Field Name" description-key="If provided, and available on current form, used for RecordId" of-type="SingleLine.Text" usage="input" required="false" />
-    <property name="ColumnLayoutJson" display-name-key="Column Layout Json" description-key="Json list of Columns (name, fieldName)" of-type="Multiple" usage="input" required="false" />
-    <property name="ItemsPerPage" display-name-key="Items Per Page" description-key="Items Per Page (Defaults to 5000)" of-type="Whole.None" usage="input" required="false" default-value="5000"/>
-    
-    <property name="DebugMode" display-name-key="Run in Debug Mode" description-key="Write extra details to console.log"  of-type="Enum" usage="input" required="false">
-       <value name="Off" display-name-key="Off" description-key="Do NOT run in Debug Mode" default="true">0</value>
-       <value name="On" display-name-key="On" description-key="Run in Debug Mode">1</value>
-    </property>
-
-    <resources>
-      <code path="index.ts" order="1"/>
-      <platform-library name="React" version="16.14.0" />
-      <platform-library name="Fluent" version="9.46.2" />
-      <css path="css/DynamicDetailsList.css" order="1" />
-    </resources>
     <feature-usage>
       <!-- <uses-feature name="Device.captureAudio" required="true" />
       <uses-feature name="Device.captureImage" required="true" />
@@ -62,6 +37,26 @@
       <uses-feature name="Utility" required="true" />
       <uses-feature name="WebAPI" required="true" />
     </feature-usage>
-    
+    <property name="FetchXml" display-name-key="FetchXml Query" description-key="FetchXml Query with RecordId Placeholder in Filter" of-type="Multiple" usage="input" required="true" />
+    <property name="RecordIdPlaceholder" display-name-key="RecordId Placeholder" description-key="Will be replaced with RecordId. ie. [RECORDID] " of-type="SingleLine.Text" usage="input" required="true" default-value="[RECORDID]" />
+    <property name="ControlAnchorField" display-name-key="ControlAnchorField" description-key="Dummy text field used to place grid." of-type-group="SupportedFields" usage="bound" required="true" />
+    <property name="OverriddenRecordIdFieldName" display-name-key="Overridden RecordId Field Name" description-key="If provided, and available on current form, used for RecordId" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="ColumnLayoutJson" display-name-key="Column Layout Json" description-key="Json list of Columns (name, fieldName)" of-type="Multiple" usage="input" required="false" />
+    <property name="ItemsPerPage" display-name-key="Items Per Page" description-key="Items Per Page (Defaults to 5000)" of-type="Whole.None" usage="input" required="false" default-value="5000" />
+    <property name="DebugMode" display-name-key="Run in Debug Mode" description-key="Write extra details to console.log" of-type="Enum" usage="input" required="false">
+      <value name="Off" display-name-key="Off" description-key="Do NOT run in Debug Mode" default="true">0</value>
+      <value name="On" display-name-key="On" description-key="Run in Debug Mode">1</value>
+    </property>
+    <resources>
+      <code path="index.ts" order="1" />
+      <css path="css/DynamicDetailsList.css" order="1" />
+      <platform-library name="Fluent" version="9.46.2" />
+      <platform-library name="React" version="16.14.0" />
+    </resources>
+    <type-group name="SupportedFields">
+      <type>SingleLine.Text</type>
+      <type>SingleLine.TextArea</type>
+      <type>Multiple</type>
+    </type-group>
   </control>
 </manifest>

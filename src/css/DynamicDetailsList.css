@@ -105,6 +105,12 @@
 .dataverse-grid .fui-Link {
     color: #0078d4;
     text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: top;
 }
 
 .dataverse-grid .fui-Link:hover {

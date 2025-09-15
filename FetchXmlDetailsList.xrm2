@@ -1,0 +1,17 @@
+{
+  "SolutionType": 2,
+  "Organizations": [
+    {
+      "ConnectionProtocol": 3072,
+      "OrganizationDisplayName": "CRM Sandbox [Dev]",
+      "OrganizationName": "gaminglaboratories",
+      "OrganizationUrl": "https://gli-crm-dev.crm.dynamics.com",
+      "UserFriendlyName": "GLI Dev",
+      "CurrentSolution": {
+        "Id": "37fbe43e-3490-f011-b4cc-002248244160",
+        "Name": "CustomSubgrid",
+        "UniqueName": "CustomSubgrid"
+      }
+    }
+  ]
+}

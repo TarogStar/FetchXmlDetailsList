@@ -92,28 +92,40 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
     private normalizeColumns(columns: any): ILegacyColumn[] {
         if (!columns) return [];
         
+        let normalizedColumns: ILegacyColumn[] = [];
+        
         // If it has a 'default' property, use that (JSON parsed structure)
         if (columns.default && Array.isArray(columns.default)) {
-            return columns.default as ILegacyColumn[];
+            normalizedColumns = columns.default as ILegacyColumn[];
         }
-        
         // If it's already an array, use it directly
-        if (Array.isArray(columns)) {
-            return columns as ILegacyColumn[];
+        else if (Array.isArray(columns)) {
+            normalizedColumns = columns as ILegacyColumn[];
         }
-        
         // If it's an object with numeric keys, convert to array
-        if (typeof columns === 'object' && columns.length !== undefined) {
+        else if (typeof columns === 'object' && columns.length !== undefined) {
             const result: ILegacyColumn[] = [];
             for (let i = 0; i < columns.length; i++) {
                 if (columns[i]) {
                     result.push(columns[i]);
                 }
             }
-            return result;
+            normalizedColumns = result;
         }
         
-        return [];
+        // Convert field names for entity linking fields to Web API format
+        return normalizedColumns.map(column => {
+            if (column.data?.entityLinking === true) {
+                // If it doesn't already follow Web API pattern (_fieldname_value), convert it
+                if (!column.fieldName.startsWith('_') || !column.fieldName.endsWith('_value')) {
+                    return {
+                        ...column,
+                        fieldName: `_${column.fieldName}_value`
+                    };
+                }
+            }
+            return column;
+        });
     }
 
     // Convert legacy columns to FluentUI v9 TableColumnDefinition
@@ -398,13 +410,17 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
 
     private _renderItemColumn = (item: any, _index: number | undefined, column: ILegacyColumn): JSX.Element => {
         let fieldContent = item[column.fieldName];
-        if (item[column.key + _FORMATTEDVALUE]) {
+        
+        // Check for formatted value - use the actual field name for entity linking fields
+        const formattedValueKey = column.fieldName + _FORMATTEDVALUE;
+        if (item[formattedValueKey]) {
+            fieldContent = item[formattedValueKey];
+        } else if (item[column.key + _FORMATTEDVALUE]) {
             fieldContent = item[column.key + _FORMATTEDVALUE];
         }
         
         const rowId = item[this._primaryEntityName + "id"] || Math.random().toString();
         const cellId = `${rowId}-${column.key}`;
-        const isFocused = this.state.focusedCellId === cellId;
         
         // Support joining more than one field into one table field    
         if (column.data && column.data.joinValuesFromTheseFields) {
@@ -511,10 +527,10 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
             // Support navigation to entity links
             // "data" : {"entityLinking": true}
             // Test harness will give error "Your control is trying to open a form. This is not yet supported."
-            else if (item[column.key + _LOOKUPLOGICALNAMEATTRIBUTE]) {
+            else if (item[column.fieldName + _LOOKUPLOGICALNAMEATTRIBUTE]) {
                 if (column.data && column.data.entityLinking && column.data.entityLinking == true) {
                     //let baseFieldName = column.key.replace(_LOOKUPLOGICALNAMEATTRIBUTE, "");
-                    return (<Link key={item} onClick={() => this._pcfContext.navigation.openForm({ entityName: item[column.key + _LOOKUPLOGICALNAMEATTRIBUTE], entityId: item[column.key] })}>
+                    return (<Link key={item} onClick={() => this._pcfContext.navigation.openForm({ entityName: item[column.fieldName + _LOOKUPLOGICALNAMEATTRIBUTE], entityId: item[column.fieldName] })}>
                         {fieldContent}
                     </Link>
                     );
