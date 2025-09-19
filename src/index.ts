@@ -9,6 +9,7 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
     private _columnLayout: Array<TableColumnDefinition<any>>;
     private _isDebugMode: boolean;
     private _baseEnvironmentUrl?: string;
+    private _recordId: string;
 
      /** General */
      private _context: ComponentFramework.Context<IInputs>;
@@ -110,6 +111,7 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
             fetchXML =  fetchXML.replace(/"/g, "'");
             this._primaryEntityName = this.getPrimaryEntityNameFromFetchXml(fetchXML);
             // Replace the placeholder     
+            this._recordId = recordId;
             this._fetchXML = this.replacePlaceholderWithId(fetchXML, recordId, recordIdPlaceholder ?? "");
         }
 
@@ -158,7 +160,16 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
      */
     public updateView(context: ComponentFramework.Context<IInputs>): React.ReactElement {
         // debugger;  // eslint-disable-line no-debugger
-        let props = {  columns: this._columnLayout, primaryEntityName: this._primaryEntityName, fetchXml: this._fetchXML, isDebugMode: this._isDebugMode, context: context, baseD365Url: this._baseEnvironmentUrl };
+        let props = {
+            columns: this._columnLayout,
+            primaryEntityName: this._primaryEntityName,
+            fetchXml: this._fetchXML,
+            isDebugMode: this._isDebugMode,
+            context: context,
+            baseD365Url: this._baseEnvironmentUrl,
+            CustomButtonConfig: context.parameters.CustomButtonConfig?.raw,
+            recordId: this._recordId
+        };
         return React.createElement(DynamicDetailsList, props);
 
         // TODO: Is it possible to support a grid without a columnlayout?

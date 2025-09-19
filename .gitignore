@@ -24,3 +24,4 @@
 # igonore backups too  
 # Lets keep the builds in source control for ease of use
 # *.zip
+/solution/bin/**
