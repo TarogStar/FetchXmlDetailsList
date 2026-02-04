@@ -15,7 +15,6 @@ import {
 } from '@fluentui/react-components';
 import { IDynamicDetailsListState, ICustomButtonConfig } from './types';
 import { CommandBar } from './CommandBar';
-import './css/DynamicDetailsList.css';
 
 export interface DataGridWrapperProps {
     state: IDynamicDetailsListState;

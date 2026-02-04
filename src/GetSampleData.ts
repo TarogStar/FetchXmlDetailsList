@@ -1,10 +1,10 @@
 // Use these two lines for Sample Contract dataset
-//import * as sampleResponseData from './data/sample.Contracts.Response.webapi.json';
-//import * as sampleResponseColumnLayout from './data/sample.Contracts.columnLayout.webapi.json';
+//import sampleResponseData from './data/sample.Contracts.Response.webapi.json';
+//import sampleResponseColumnLayout from './data/sample.Contracts.columnLayout.webapi.json';
 
 // Use these two lines for Sample Connections dataset
-import * as sampleResponseData from './data/sample.Connections.Response.webapi.json';
-import * as sampleResponseColumnLayout from './data/sample.Connections.columnLayout.webapi.json';
+import sampleResponseData from './data/sample.Connections.Response.webapi.json';
+import sampleResponseColumnLayout from './data/sample.Connections.columnLayout.webapi.json';
 
 export function GetSampleData() {
     // For WebApi response with value node

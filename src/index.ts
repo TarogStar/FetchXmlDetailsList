@@ -51,7 +51,7 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
         
         // TODO: Validate the input parameters to make sure we get a friendly error instead of weird errors
         var fetchXML : string | null = this._context.parameters.FetchXml.raw; 
-        var recordIdPlaceholder : string | null = this._context.parameters.RecordIdPlaceholder.raw; // ?? "";  
+        var recordIdPlaceholder : string | null = this._context.parameters.RecordIdPlaceholder?.raw ?? "[RECORDID]";  
     
         // const recordIdLookupValue: ComponentFramework.EntityReference = this._context.parameters.RecordId.raw[0];
 
@@ -66,41 +66,11 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
         }
         var recordId : string = entityId; //this._context.parameters.RecordId.raw ?? currentRecordId;
 
-        // See if we can use an Id from a lookup field specified on the current form
-        // Wish we could use the Lookup property type, but doesn't appear to be supported yet
-        // https://butenko.pro/2021/03/21/pcf-lookup-attribute-lets-take-look-under-the-hood/
-        // So using a hack to get the value from the Xrm.Page.  This is not recommended.
-        // TODO: you may need to webapi fetch the id 
-        // https://github.com/shivuparagi/GenericLookupPCFControl/blob/main/GenericLookupPCFComponent/components/CalloutControlComponent.tsx
-        // Look at LoadData function
-        var overriddenRecordIdFieldName : string | null = this._context.parameters.OverriddenRecordIdFieldName.raw; // ?? "";
-        if (overriddenRecordIdFieldName) {
-            try {
-                // Hack to get the field value from parent Model Driven App
-                // eslint-disable-next-line no-undef
-                // @ts-ignore
-                // eslint-disable-next-line no-undef
-                let tmpLookupField: any = Xrm.Page.getAttribute(overriddenRecordIdFieldName);
-                if (tmpLookupField && tmpLookupField.getValue() && tmpLookupField.getValue()[0] && tmpLookupField.getValue()[0].id) {
-                    recordId = tmpLookupField.getValue()[0].id;
-                    if (this._isDebugMode){
-                        console.log(`overriddenRecordIdFieldName '${overriddenRecordIdFieldName}' value used: ${recordId}.`)
-                    }
-                }
-                else {
-                    if (this._isDebugMode){
-                        console.log(`Could not find id from overriddenRecordIdFieldName '${overriddenRecordIdFieldName}'.`)
-                    }
-                }
-                //let control = (<any>this._context)?.page.getControl(overriddenRecordIdFieldName);
-                //if (control && control.id){
-                //    recordId = control.id;
-                //}
-            }
-            catch(ex){
-                if (this._isDebugMode){
-                    console.log(`Error trying to find id from overriddenRecordIdFieldName '${overriddenRecordIdFieldName}'. ${ex}`)
-                }
+        const overriddenRecordId = this._context.parameters.OverriddenRecordIdFieldName?.raw;
+        if (overriddenRecordId && overriddenRecordId.length > 0 && overriddenRecordId[0]?.id) {
+            recordId = overriddenRecordId[0].id;
+            if (this._isDebugMode){
+                console.log(`OverriddenRecordIdFieldName value used: ${recordId}.`)
             }
         }
 
@@ -112,7 +82,16 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
             this._primaryEntityName = this.getPrimaryEntityNameFromFetchXml(fetchXML);
             // Replace the placeholder     
             this._recordId = recordId;
-            this._fetchXML = this.replacePlaceholderWithId(fetchXML, recordId, recordIdPlaceholder ?? "");
+            const recordIdPlaceholderValue = recordIdPlaceholder ?? "";
+            const resolvedFetchXml = this.replacePlaceholderWithId(fetchXML, recordId, recordIdPlaceholderValue);
+            const isGuid = (value: string) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value || "");
+            const unresolvedPlaceholder = recordIdPlaceholderValue && resolvedFetchXml.includes(recordIdPlaceholderValue);
+
+            if (!isGuid(recordId) || unresolvedPlaceholder) {
+                this._fetchXML = null;
+            } else {
+                this._fetchXML = resolvedFetchXml;
+            }
         }
 
         // Column Layout provides field ordering, names, and widths

@@ -25,6 +25,7 @@
     "@types/powerapps-component-framework": "^1.3.4",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
+    "baseline-browser-mapping": "^2.9.19",
     "eslint": "^8.24.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-node": "^11.1.0",
