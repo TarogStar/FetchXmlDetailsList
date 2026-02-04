@@ -77,6 +77,10 @@ i.e. <code>[RECORDID]</code>
 - <code>ColumnLayoutJson</code> is a collection of columns used for the table layout.  See details below.
 - <code>ItemsPerPage</code> is defaults to 5000 as paging is currently not implemented.  // [NOT SUPPORTED CURRENTLY] ItemsPerPage is how many items to show per page. For now this is set at 5000 since paging and sorting seem to be at odds with each other.
 - <code>DebugMode</code> can be set to <code>On</code> or <code>Off</code>.  When enabled, this will write extra details to console, break when entering the main control, and break on handled exceptions.
+- <code>CustomButtonConfig</code> adds a custom button to the command bar. This can either open a Custom Page or call a web resource function. See <a href="#CustomButtons">Custom Buttons</a> below.
+- <code>HideNewButton</code> hides the built-in <code>+ New</code> button when set to <code>On</code>.
+- <code>HideRefreshButton</code> hides the built-in <code>Refresh</code> button when set to <code>On</code>.
+- <code>HideExportButton</code> hides the built-in <code>Export</code> button when set to <code>On</code>.
 
 
 ## ColumnLayoutJson
@@ -201,6 +205,91 @@ ColumnLayoutJson Example:
   }
 ]
 ````
+
+## <a name="CustomButtons"></a>Custom Buttons
+You can add a custom command bar button by setting the <code>CustomButtonConfig</code> input parameter. This configuration supports two approaches:
+
+1) **Custom Page** (no web resource code required)
+   - The button opens a Custom Page dialog using <code>Xrm.Navigation.navigateTo</code>.
+   - This is the easiest option if you can build a Custom Page to collect inputs (e.g., quantity used) and create records there.
+
+2) **Web Resource Function** (call a JavaScript function)
+   - The button loads a JS web resource and calls a function you provide.
+   - Use this if you want to handle input and record creation directly via script.
+
+### Custom Page Example (recommended)
+Set <code>CustomButtonConfig</code> to open a Custom Page:
+
+```json
+{
+  "buttonText": "Record Usage",
+  "customPageName": "new_usagepage_12345",
+  "dialogTitle": "Record Usage",
+  "dialogWidth": 60,
+  "dialogHeight": 50,
+  "showWhenSelectedMin": 1,
+  "showWhenSelectedMax": 1
+}
+```
+
+When the button is clicked, the control passes the following data to the Custom Page via the <code>pageInput.data</code> payload:
+- <code>parentRecordId</code> (the host form record id)
+- <code>selectedRowIds</code> (array of selected row ids)
+- <code>selectedRecords</code> (array of full row objects)
+
+**What to do in the Custom Page**
+- Read the selected record ID from the page context (you can pass it as the parent record).
+- Prompt the user for a quantity.
+- Create the usage record in Dataverse using your logic.
+
+### Web Resource Function Example
+Set <code>CustomButtonConfig</code> to load a web resource and call your function:
+
+```json
+{
+  "buttonText": "Record Usage",
+  "functionName": "MyUsage.record",
+  "customPageName": "new_usagepage_12345",
+  "webResourceName": "new_/MyUsage.js",
+  "dialogTitle": "Record Usage",
+  "showWhenSelectedMin": 1,
+  "showWhenSelectedMax": 5
+}
+```
+
+**Example Web Resource (MyUsage.js)**
+```javascript
+var MyUsage = MyUsage || {};
+
+MyUsage.record = async function(formContext, customPageName, customData) {
+  // Use your own UI here (prompt, custom dialog, or open a custom page)
+  var qty = window.prompt("Enter quantity used:");
+  if (!qty) return;
+
+  var quantity = Number(qty);
+  if (Number.isNaN(quantity) || quantity <= 0) {
+    Xrm.Navigation.openAlertDialog({ text: "Quantity must be a positive number." });
+    return;
+  }
+
+  // Example payload - replace with your entity/column schema
+  var entity = "new_usage";
+  var record = {
+    "new_quantity": quantity,
+    "new_name": "Usage"
+  };
+
+  await Xrm.WebApi.createRecord(entity, record);
+  Xrm.Navigation.openAlertDialog({ text: "Usage recorded." });
+};
+```
+
+When using a web resource function, the control passes the same data object as the third argument (<code>customData</code>).
+
+### Notes
+- The button appears in the grid command bar next to the built-in buttons.
+- If you want to require row selection before running the action, update the handler in <code>DynamicDetailsList.tsx</code> to check the selected rows before invoking your logic.
+- If you need to hide the built-in <code>+ New</code> button, add a custom input flag and conditionally render it in <code>CommandBar.tsx</code>.
 ## Initial Configuration Tips
 If you have DebugMode turned on you can see in the console log three important items: `DynamicDetailsList fetchXml` (with the RecordIdPlaceholder replaced), `DynamicDetailsList columnLayout `, and `webAPI.retrieveMultipleRecords : this._allItems` which shows the records returned.
 ![Alt text](img/DebugModeOn-ShowConsoleLog.png)

@@ -27,7 +27,8 @@ async function loadWebResource(webResourceName: string): Promise<void> {
 export async function openCustomPage(
     config: ICustomButtonConfig,
     pcfContext: any,
-    parentEntityId?: string
+    parentEntityId?: string,
+    customData?: any
 ): Promise<void> {
     try {
         const formContext = pcfContext.mode?.contextInfo?.formContext || pcfContext;
@@ -48,7 +49,7 @@ export async function openCustomPage(
             }
 
             // Call the function with the form context and custom page name
-            await targetFunction(formContext, config.customPageName);
+            await targetFunction(formContext, config.customPageName, customData);
             return;
         }
 
@@ -69,7 +70,8 @@ export async function openCustomPage(
             pageType: "custom",
             name: config.customPageName,
             entityName: formContext?.data?.entity?.getEntityName?.() || "opportunity", // default to opportunity
-            recordId: entityId
+            recordId: entityId,
+            data: customData
         };
 
         // Dialog options with defaults

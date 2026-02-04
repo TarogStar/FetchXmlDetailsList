@@ -24,6 +24,9 @@ export interface CommandBarProps {
     onRefresh: () => void;
     customButtonConfig?: ICustomButtonConfig;
     onCustomButtonClick?: () => void;
+    hideNewButton?: boolean;
+    hideRefreshButton?: boolean;
+    hideExportButton?: boolean;
 }
 
 export const CommandBar: React.FC<CommandBarProps> = ({
@@ -33,7 +36,10 @@ export const CommandBar: React.FC<CommandBarProps> = ({
     selectedItems,
     onRefresh,
     customButtonConfig,
-    onCustomButtonClick
+    onCustomButtonClick,
+    hideNewButton,
+    hideRefreshButton,
+    hideExportButton
 }) => {
     const [entityDisplayName, setEntityDisplayName] = React.useState<string>(() => {
         // Fallback formatting before metadata is loaded
@@ -61,7 +67,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     }
                 }
             } catch (e) {
-                // Silent fallback – keep the heuristic name
+                // Silent fallback ï¿½ keep the heuristic name
                 if (pcfContext?.parameters?.DebugMode?.raw === '1') {
                     // eslint-disable-next-line no-console
                     console.log('Failed to get entity metadata display name:', e);
@@ -89,6 +95,11 @@ export const CommandBar: React.FC<CommandBarProps> = ({
         }
     };
 
+    const selectedCount = selectedItems.size;
+    const showCustomButton = !!customButtonConfig
+        && (customButtonConfig.showWhenSelectedMin === undefined || selectedCount >= customButtonConfig.showWhenSelectedMin)
+        && (customButtonConfig.showWhenSelectedMax === undefined || selectedCount <= customButtonConfig.showWhenSelectedMax);
+
     return (
         <FluentProvider theme={webLightTheme}>
             <Toolbar
@@ -99,15 +110,17 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     backgroundColor: '#fafafa'
                 }}
            >
-                <ToolbarButton
-                    appearance="primary"
-                    icon={<AddIcon />}
-                    onClick={handleNewRecord}
-                >
-                    New {entityDisplayName}
-                </ToolbarButton>
+                {!hideNewButton && (
+                    <ToolbarButton
+                        appearance="primary"
+                        icon={<AddIcon />}
+                        onClick={handleNewRecord}
+                    >
+                        New {entityDisplayName}
+                    </ToolbarButton>
+                )}
 
-                {customButtonConfig && (
+                {showCustomButton && customButtonConfig && (
                     <ToolbarButton
                         icon={<AddIcon />}
                         onClick={handleCustomButtonClickInternal}
@@ -118,21 +131,25 @@ export const CommandBar: React.FC<CommandBarProps> = ({
 
                 <ToolbarDivider />
 
-                <ToolbarButton
-                    icon={<RefreshIcon />}
-                    onClick={onRefresh}
-                    title="Refresh"
-                >
-                    Refresh
-                </ToolbarButton>
+                {!hideRefreshButton && (
+                    <ToolbarButton
+                        icon={<RefreshIcon />}
+                        onClick={onRefresh}
+                        title="Refresh"
+                    >
+                        Refresh
+                    </ToolbarButton>
+                )}
 
-                <ToolbarButton
-                    icon={<DownloadIcon />}
-                    onClick={handleExport}
-                    title="Export to CSV"
-                >
-                    Export
-                </ToolbarButton>
+                {!hideExportButton && (
+                    <ToolbarButton
+                        icon={<DownloadIcon />}
+                        onClick={handleExport}
+                        title="Export to CSV"
+                    >
+                        Export
+                    </ToolbarButton>
+                )}
 
                 {selectedItems.size > 0 && (
                     <Menu>

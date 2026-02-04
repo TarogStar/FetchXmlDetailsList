@@ -135,7 +135,19 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
             try {
                 // Use the record ID that's already passed from the main component
                 const recordId = this.props.recordId;
-                await openCustomPage(this._customButtonConfig, this._pcfContext, recordId);
+                const selectedRowIds = Array.from(this.state.selectedRowIds || []);
+                const selectedRecords = this.state.items.filter((item: any) => {
+                    const rowId = item[this._primaryEntityName + "id"];
+                    return rowId && selectedRowIds.includes(rowId);
+                });
+
+                const customButtonData = {
+                    parentRecordId: recordId,
+                    selectedRowIds,
+                    selectedRecords
+                };
+
+                await openCustomPage(this._customButtonConfig, this._pcfContext, recordId, customButtonData);
             } catch (error) {
                 console.error('Failed to open custom page:', error);
             }
@@ -163,6 +175,9 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
                 customButtonConfig={this._customButtonConfig}
                 onCustomButtonClick={this.handleCustomButtonClick}
                 minTableWidth={this.getTotalMinWidth()}
+                hideNewButton={this.props.hideNewButton}
+                hideRefreshButton={this.props.hideRefreshButton}
+                hideExportButton={this.props.hideExportButton}
             />
         );
     }

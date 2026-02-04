@@ -26,6 +26,9 @@ export interface DataGridWrapperProps {
     customButtonConfig?: ICustomButtonConfig;
     onCustomButtonClick?: () => void;
     minTableWidth?: number; // new: total min width of all columns
+    hideNewButton?: boolean;
+    hideRefreshButton?: boolean;
+    hideExportButton?: boolean;
 }
 
 export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
@@ -36,7 +39,10 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
     onRefresh,
     customButtonConfig,
     onCustomButtonClick,
-    minTableWidth
+    minTableWidth,
+    hideNewButton,
+    hideRefreshButton,
+    hideExportButton
 }) => {
     const { columns, items, announcedMessage } = state;
 
@@ -52,6 +58,9 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
                         onRefresh={onRefresh}
                         customButtonConfig={customButtonConfig}
                         onCustomButtonClick={onCustomButtonClick}
+                        hideNewButton={hideNewButton}
+                        hideRefreshButton={hideRefreshButton}
+                        hideExportButton={hideExportButton}
                     />
 
                     <div className="gridContainer">

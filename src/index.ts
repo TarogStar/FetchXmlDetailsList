@@ -168,7 +168,10 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
             context: context,
             baseD365Url: this._baseEnvironmentUrl,
             CustomButtonConfig: context.parameters.CustomButtonConfig?.raw,
-            recordId: this._recordId
+            recordId: this._recordId,
+            hideNewButton: context.parameters.HideNewButton?.raw === "1",
+            hideRefreshButton: context.parameters.HideRefreshButton?.raw === "1",
+            hideExportButton: context.parameters.HideExportButton?.raw === "1"
         };
         return React.createElement(DynamicDetailsList, props);
 

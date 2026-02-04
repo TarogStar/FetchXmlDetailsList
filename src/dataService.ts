@@ -31,11 +31,36 @@ export class DataService {
         const normalizedColumns = normalizeColumns(columns);
         const tableColumns = convertToTableColumns(normalizedColumns, renderItemColumn, compareValues);
 
+        const isAuthoringMode = !!this.pcfContext?.mode?.isAuthoring;
+
         if (this.isDebugMode) {
             console.log("DataService primaryEntityName", primaryEntityName);
             console.log("DataService fetchXml", fetchXml);
             console.log("DataService columnLayout", tableColumns);
             debugger;  // eslint-disable-line no-debugger
+        }
+
+        if (isAuthoringMode) {
+            const sampleData = GetSampleData();
+
+            if (sampleData.dataItems && sampleData.dataItems.length > 0) {
+                const sampleNormalizedColumns = normalizeColumns(sampleData.columns);
+                const sampleTableColumns = convertToTableColumns(sampleNormalizedColumns, renderItemColumn, compareValues);
+
+                return {
+                    items: sampleData.dataItems,
+                    columns: sampleTableColumns,
+                    primaryEntityName: sampleData.primaryEntityName,
+                    announcedMessage: "Authoring mode: using sample data."
+                };
+            }
+
+            return {
+                items: [],
+                columns: tableColumns,
+                primaryEntityName,
+                announcedMessage: "Authoring mode: no sample data found."
+            };
         }
 
         // Check we actually have a query to run, otherwise try to use sample data

@@ -31,6 +31,8 @@ export interface ICustomButtonConfig {
     dialogTitle?: string;
     dialogWidth?: number;
     dialogHeight?: number;
+    showWhenSelectedMin?: number;
+    showWhenSelectedMax?: number;
 }
 
 export interface IDynamicDetailsListProps {
@@ -46,6 +48,9 @@ export interface IDynamicDetailsListProps {
     baseD365Url?: string;
     dataItems?: any[];
     CustomButtonConfig?: string; // JSON string containing ICustomButtonConfig
+    hideNewButton?: boolean;
+    hideRefreshButton?: boolean;
+    hideExportButton?: boolean;
 }
 
 export interface IDynamicDetailsListState {

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest>
   <!-- Manifest schema reference: https://learn.microsoft.com/en-us/power-apps/developer/component-framework/manifest-schema-reference/ -->
-  <control namespace="Schiavone" constructor="FetchXmlDetailsList" version="0.0.26" display-name-key="FetchXml DetailsList" description-key="Control generates a FluentUI DetailsList for subgrids loaded via a custom FetchXml query and column layout" control-type="virtual" preview-image="../img/Preview.png">
+  <control namespace="GLI" constructor="FetchXmlDetailsList" version="0.0.27" display-name-key="FetchXml DetailsList" description-key="Control generates a FluentUI DetailsList for subgrids loaded via a custom FetchXml query and column layout" control-type="virtual" preview-image="../img/Preview.png">
     <!--external-service-usage node declares whether this 3rd party PCF control is using external service or not, if yes, this control will be considered as premium and please also add the external domain it is using.
     If it is not using any external service, please set the enabled="false" and DO NOT add any domain below. The "enabled" will be false by default.
     Example1:
@@ -41,11 +41,23 @@
     <property name="RecordIdPlaceholder" display-name-key="RecordId Placeholder" description-key="Will be replaced with RecordId. ie. [RECORDID] " of-type="SingleLine.Text" usage="input" required="true" default-value="[RECORDID]" />
     <property name="ControlAnchorField" display-name-key="ControlAnchorField" description-key="Dummy text field used to place grid." of-type-group="SupportedFields" usage="bound" required="true" />
     <property name="OverriddenRecordIdFieldName" display-name-key="Overridden RecordId Field Name" description-key="If provided, and available on current form, used for RecordId" of-type="SingleLine.Text" usage="input" required="false" />
-    <property name="ColumnLayoutJson" display-name-key="Column Layout Json" description-key="Json list of Columns (name, fieldName)" of-type="Multiple" usage="input" required="false" />
+    <property name="ColumnLayoutJson" display-name-key="Column Layout Json" description-key="Json list of Columns (name, fieldName)" of-type="Multiple" usage="input" required="true" />
     <property name="ItemsPerPage" display-name-key="Items Per Page" description-key="Items Per Page (Defaults to 5000)" of-type="Whole.None" usage="input" required="false" default-value="5000" />
     <property name="DebugMode" display-name-key="Run in Debug Mode" description-key="Write extra details to console.log" of-type="Enum" usage="input" required="false">
       <value name="Off" display-name-key="Off" description-key="Do NOT run in Debug Mode" default="true">0</value>
       <value name="On" display-name-key="On" description-key="Run in Debug Mode">1</value>
+    </property>
+    <property name="HideNewButton" display-name-key="Hide New Button" description-key="Hide the built-in + New button" of-type="Enum" usage="input" required="false">
+      <value name="Off" display-name-key="Off" description-key="Show New button" default="true">0</value>
+      <value name="On" display-name-key="On" description-key="Hide New button">1</value>
+    </property>
+    <property name="HideRefreshButton" display-name-key="Hide Refresh Button" description-key="Hide the built-in Refresh button" of-type="Enum" usage="input" required="false">
+      <value name="Off" display-name-key="Off" description-key="Show Refresh button" default="true">0</value>
+      <value name="On" display-name-key="On" description-key="Hide Refresh button">1</value>
+    </property>
+    <property name="HideExportButton" display-name-key="Hide Export Button" description-key="Hide the built-in Export button" of-type="Enum" usage="input" required="false">
+      <value name="Off" display-name-key="Off" description-key="Show Export button" default="true">0</value>
+      <value name="On" display-name-key="On" description-key="Hide Export button">1</value>
     </property>
     <property name="CustomButtonConfig" display-name-key="Custom Button Configuration" description-key="JSON configuration for custom ribbon button (e.g., {buttonText:Create Projects, functionName:createProjects, customPageName:gli_projectcreator_cc71d, webResourceName:gli_projectribbon.js})" of-type="Multiple" usage="input" required="false" />
     <resources>
