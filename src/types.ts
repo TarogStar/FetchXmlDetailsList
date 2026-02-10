@@ -51,6 +51,7 @@ export interface IDynamicDetailsListProps {
     hideNewButton?: boolean;
     hideRefreshButton?: boolean;
     hideExportButton?: boolean;
+    hideBulkEditButton?: boolean;
 }
 
 export interface IDynamicDetailsListState {

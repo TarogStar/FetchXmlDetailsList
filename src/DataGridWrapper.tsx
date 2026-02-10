@@ -28,6 +28,7 @@ export interface DataGridWrapperProps {
     hideNewButton?: boolean;
     hideRefreshButton?: boolean;
     hideExportButton?: boolean;
+    hideBulkEditButton?: boolean;
 }
 
 export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
@@ -41,7 +42,8 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
     minTableWidth,
     hideNewButton,
     hideRefreshButton,
-    hideExportButton
+    hideExportButton,
+    hideBulkEditButton
 }) => {
     const { columns, items, announcedMessage } = state;
 
@@ -60,6 +62,7 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
                         hideNewButton={hideNewButton}
                         hideRefreshButton={hideRefreshButton}
                         hideExportButton={hideExportButton}
+                        hideBulkEditButton={hideBulkEditButton}
                     />
 
                     <div className="gridContainer">
@@ -74,7 +77,7 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
                                 columns={columns}
                                 sortable
                                 selectionMode="multiselect"
-                                getRowId={(item: any) => item[primaryEntityName + 'id'] || Math.random().toString()}
+                                getRowId={(item: any) => item.__rowId || item[primaryEntityName + 'id']}
                                 selectedItems={Array.from(state.selectedRowIds)}
                                 onSelectionChange={(_, data) => {
                                     onSelectionChange(new Set(Array.from(data.selectedItems)));

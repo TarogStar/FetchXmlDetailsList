@@ -21,9 +21,20 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
     // Cache legacy columns for min width calculation
     private _legacyColumns: ILegacyColumn[] = [];
 
+    private ensureRowIds(items: any[], primaryEntityName: string): any[] {
+        return (items || []).map((item: any, index: number) => {
+            if (!item || typeof item !== 'object') return item;
+            const primaryId = item[primaryEntityName + 'id'];
+            return {
+                ...item,
+                __rowId: item.__rowId || primaryId || `row-${index}`
+            };
+        });
+    }
+
     // Handle cell click - select row and focus cell (Dataverse behavior)
     private handleCellClick = (item: any, column: ILegacyColumn, event: React.MouseEvent) => {
-        const rowId = item[this._primaryEntityName + "id"] || Math.random().toString();
+        const rowId = item.__rowId || item[this._primaryEntityName + "id"];
         const cellId = `${rowId}-${column.key}`;
 
         // Don't change selection if clicking on a checkbox
@@ -83,7 +94,7 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
         this.dataService = new DataService(this._pcfContext, this._isDebugMode);
 
         this.state = {
-            items: this._allItems || [],
+            items: this.ensureRowIds(this._allItems || [], this._primaryEntityName),
             columns: [],
             fetchXml: this._fetchXml,
             primaryEntityName: this._primaryEntityName,
@@ -111,8 +122,10 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
             this._primaryEntityName = result.primaryEntityName;
             this._announcedMessage = result.announcedMessage;
 
+            const itemsWithRowIds = this.ensureRowIds(result.items, result.primaryEntityName);
+
             this.setState({
-                items: result.items,
+                items: itemsWithRowIds,
                 columns: result.columns,
                 primaryEntityName: result.primaryEntityName,
                 announcedMessage: result.announcedMessage
@@ -137,7 +150,7 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
                 const recordId = this.props.recordId;
                 const selectedRowIds = Array.from(this.state.selectedRowIds || []);
                 const selectedRecords = this.state.items.filter((item: any) => {
-                    const rowId = item[this._primaryEntityName + "id"];
+                    const rowId = item.__rowId || item[this._primaryEntityName + "id"];
                     return rowId && selectedRowIds.includes(rowId);
                 });
 
@@ -178,6 +191,7 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
                 hideNewButton={this.props.hideNewButton}
                 hideRefreshButton={this.props.hideRefreshButton}
                 hideExportButton={this.props.hideExportButton}
+                hideBulkEditButton={this.props.hideBulkEditButton}
             />
         );
     }

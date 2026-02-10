@@ -27,6 +27,7 @@ export interface CommandBarProps {
     hideNewButton?: boolean;
     hideRefreshButton?: boolean;
     hideExportButton?: boolean;
+    hideBulkEditButton?: boolean;
 }
 
 export const CommandBar: React.FC<CommandBarProps> = ({
@@ -39,7 +40,8 @@ export const CommandBar: React.FC<CommandBarProps> = ({
     onCustomButtonClick,
     hideNewButton,
     hideRefreshButton,
-    hideExportButton
+    hideExportButton,
+    hideBulkEditButton
 }) => {
     const [entityDisplayName, setEntityDisplayName] = React.useState<string>(() => {
         // Fallback formatting before metadata is loaded
@@ -151,7 +153,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     </ToolbarButton>
                 )}
 
-                {selectedItems.size > 0 && (
+                {!hideBulkEditButton && selectedItems.size > 0 && (
                     <Menu>
                         <MenuTrigger disableButtonEnhancement>
                             <ToolbarButton
