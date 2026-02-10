@@ -2,64 +2,66 @@
 // Borrowed from https://github.com/microsoft/FluentUIEditableDetailsList/blob/main/src/libs/editablegrid/gridexportutil.tsx
 // Licensed under the MIT License.
 
-//import { ExportType } from "../types/exporttype";
-//import * as XLSX from 'xlsx';
-// import * as FileSaver from 'file-saver';
-declare global {
-    interface Navigator {
-        msSaveBlob?: (blob: any, defaultName?: string) => boolean
-    }
-}
+import { ILegacyColumn } from './types';
+import { FORMATTEDVALUE } from './constants';
 
-/*
-export const ExportToExcelUtil = (exportData : any[], fileName : string): void => 
-{
-    let fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
-    
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const data = new Blob([excelBuffer], {type: fileType});
-    FileSaver.saveAs(data, fileName);
-}
-*/
-
-export const ExportToCSVUtil = (exportData: any[], fileName: string): void => {
+export const ExportToCSVUtil = (exportData: any[], fileName: string, columns?: ILegacyColumn[]): void => {
     if (!exportData || !exportData.length) {
         return;
     }
     const separator = ',';
-    const keys = Object.keys(exportData[0]);
-    const csvContent = keys.join(separator) + '\n' +
+
+    // Build export keys from column definitions when available
+    let headers: string[];
+    let keyMap: { header: string; key: string }[];
+
+    if (columns && columns.length > 0) {
+        keyMap = [];
+        for (const col of columns) {
+            // Always include the primary field
+            keyMap.push({ header: col.name, key: col.fieldName });
+            // Include the OData formatted value if any row has it
+            const formattedKey = col.fieldName + FORMATTEDVALUE;
+            if (exportData.some(row => row[formattedKey] !== undefined)) {
+                keyMap.push({ header: `${col.name} (Formatted)`, key: formattedKey });
+            }
+        }
+        headers = keyMap.map(k => k.header);
+    } else {
+        // Fallback: export all keys except internal metadata
+        const allKeys = Object.keys(exportData[0]).filter(
+            k => !k.startsWith('@') && k !== '__rowId'
+        );
+        keyMap = allKeys.map(k => ({ header: k, key: k }));
+        headers = allKeys;
+    }
+
+    const escapeCell = (value: any): string => {
+        let cell = value === null || value === undefined ? '' : value;
+        cell = cell instanceof Date
+            ? cell.toLocaleString()
+            : cell.toString().replace(/"/g, '""');
+        if (cell.search(/("|,|\n)/g) >= 0) {
+            cell = `"${cell}"`;
+        }
+        return cell;
+    };
+
+    const csvContent = headers.map(h => escapeCell(h)).join(separator) + '\n' +
         exportData.map(row => {
-            return keys.map(k => {
-                let cell = row[k] === null || row[k] === undefined ? '' : row[k];
-                cell = cell instanceof Date
-                    ? cell.toLocaleString()
-                    : cell.toString().replace(/"/g, '""');
-                if (cell.search(/("|,|\n)/g) >= 0) {
-                    cell = `"${cell}"`;
-                }
-                return cell;
-            }).join(separator);
+            return keyMap.map(k => escapeCell(row[k.key])).join(separator);
         }).join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    if (navigator.msSaveBlob) { // IE 10+
-        navigator.msSaveBlob(blob, fileName);
-    } else {
-        const link = document.createElement('a');
-        if (link.download !== undefined) {
-            // Browsers that support HTML5 download attribute
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', fileName);
-            link.style.visibility = 'hidden';
-            link.dataset.interception = 'off';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        link.style.visibility = 'hidden';
+        link.dataset.interception = 'off';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 }
-

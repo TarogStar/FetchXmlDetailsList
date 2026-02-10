@@ -36,9 +36,9 @@ export interface ICustomButtonConfig {
 }
 
 export interface IDynamicDetailsListProps {
-    items: any[];
+    items?: any[];
     columns: IColumnDataStructure | ILegacyColumn[] | TableColumnDefinition<any>[];
-    fetchXml?: string;
+    fetchXml?: string | null;
     rootEntityName?: string;
     announcedMessage?: string;
     baseEnvironmentUrl?: string;
@@ -47,7 +47,8 @@ export interface IDynamicDetailsListProps {
     isDebugMode?: boolean;
     baseD365Url?: string;
     dataItems?: any[];
-    CustomButtonConfig?: string; // JSON string containing ICustomButtonConfig
+    CustomButtonConfig?: string | null; // JSON string containing ICustomButtonConfig
+    recordId?: string;
     hideNewButton?: boolean;
     hideRefreshButton?: boolean;
     hideExportButton?: boolean;

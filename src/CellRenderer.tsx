@@ -96,7 +96,8 @@ export class CellRenderer {
     }
 
     private renderItem(fieldContent: any): any {
-        const { item, column, baseEnvironmentUrl, isDebugMode, pcfContext } = this.props;
+        const { item, column, baseEnvironmentUrl, isDebugMode, pcfContext, primaryEntityName } = this.props;
+        const itemKey = item.__rowId || item[primaryEntityName + 'id'] || column.key;
 
         if (item[column.key] || fieldContent) {
             // Handle any custom Date Formats via date=fns format string
@@ -130,7 +131,7 @@ export class CellRenderer {
                 let linkText = (column.data.urlLinkText && column.data.urlLinkText == USE_VALUE_URL_PLACEHOLDER) ? fieldContent :
                     column.data.urlLinkText && fieldContent != "" ? column.data.urlLinkText :
                         "External Link";
-                return (<Link key={item} href={fieldContent} target="_blank">{linkText}</Link>);
+                return (<Link key={`${itemKey}-${column.key}`} href={fieldContent} target="_blank">{linkText}</Link>);
             }
             // URL Handling (with placeholders)
             // This is one approach to link to the Dynamics365 Legacy web interface for Contracts for instance
@@ -144,14 +145,14 @@ export class CellRenderer {
                 let linkText = (column.data.urlLinkText && column.data.urlLinkText == USE_VALUE_URL_PLACEHOLDER) ? fieldContent :
                     column.data.urlLinkText && fieldContent != "" ? column.data.urlLinkText :
                         "Link";
-                return (<Link key={item} href={url} target="_blank">{linkText}</Link>);
+                return (<Link key={`${itemKey}-${column.key}-url`} href={url} target="_blank">{linkText}</Link>);
             }
             // Support navigation to entity links
             // "data" : {"entityLinking": true}
             // Test harness will give error "Your control is trying to open a form. This is not yet supported."
             else if (item[column.fieldName + LOOKUPLOGICALNAMEATTRIBUTE]) {
                 if (column.data && column.data.entityLinking && column.data.entityLinking == true) {
-                    return (<Link key={item} onClick={() => pcfContext.navigation.openForm({ entityName: item[column.fieldName + LOOKUPLOGICALNAMEATTRIBUTE], entityId: item[column.fieldName] })}>
+                    return (<Link key={`${itemKey}-${column.key}-entity`} onClick={() => pcfContext.navigation.openForm({ entityName: item[column.fieldName + LOOKUPLOGICALNAMEATTRIBUTE], entityId: item[column.fieldName] })}>
                         {fieldContent}
                     </Link>
                     );

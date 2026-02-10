@@ -59,9 +59,9 @@
       <value name="Off" display-name-key="Off" description-key="Show Export button" default="true">0</value>
       <value name="On" display-name-key="On" description-key="Hide Export button">1</value>
     </property>
-    <property name="HideBulkEditButton" display-name-key="Hide Bulk Edit Button" description-key="Hide the built-in Bulk Edit button" of-type="Enum" usage="input" required="false">
-      <value name="Off" display-name-key="Off" description-key="Show Bulk Edit button" default="true">0</value>
-      <value name="On" display-name-key="On" description-key="Hide Bulk Edit button">1</value>
+    <property name="HideBulkEditButton" display-name-key="Hide Bulk Edit Button" description-key="Hide the built-in Bulk Edit button (placeholder, not yet implemented)" of-type="Enum" usage="input" required="false">
+      <value name="Off" display-name-key="Off" description-key="Show Bulk Edit button">0</value>
+      <value name="On" display-name-key="On" description-key="Hide Bulk Edit button" default="true">1</value>
     </property>
     <property name="CustomButtonConfig" display-name-key="Custom Button Configuration" description-key="JSON configuration for custom ribbon button (e.g., {buttonText:Create Projects, functionName:createProjects, customPageName:gli_projectcreator_cc71d, webResourceName:gli_projectribbon.js})" of-type="Multiple" usage="input" required="false" />
     <resources>

@@ -56,9 +56,14 @@ export async function openCustomPage(
         // Fallback to built-in custom page navigation
         // Use the provided parent entity ID
         if (!parentEntityId) {
-            await (window as any).Xrm.Navigation.openAlertDialog({
-                text: "Unable to determine parent record ID for custom page navigation."
-            });
+            const xrmNav = (window as any).Xrm?.Navigation;
+            if (xrmNav?.openAlertDialog) {
+                await xrmNav.openAlertDialog({
+                    text: "Unable to determine parent record ID for custom page navigation."
+                });
+            } else {
+                console.error('Unable to determine parent record ID for custom page navigation.');
+            }
             return;
         }
 
@@ -83,10 +88,20 @@ export async function openCustomPage(
             title: config.dialogTitle || config.buttonText
         };
 
-        await (window as any).Xrm.Navigation.navigateTo(pageInput, navigationOptions);
+        const xrmNav = (window as any).Xrm?.Navigation;
+        if (xrmNav?.navigateTo) {
+            await xrmNav.navigateTo(pageInput, navigationOptions);
+        } else {
+            console.error('Xrm.Navigation is not available. Cannot open custom page.');
+        }
     } catch (e: any) {
-        await (window as any).Xrm.Navigation.openAlertDialog({
-            text: `An error occurred while opening the custom page: ${e?.message || e}`
-        });
+        const xrmNav = (window as any).Xrm?.Navigation;
+        if (xrmNav?.openAlertDialog) {
+            await xrmNav.openAlertDialog({
+                text: `An error occurred while opening the custom page: ${e?.message || e}`
+            });
+        } else {
+            console.error(`An error occurred while opening the custom page: ${e?.message || e}`);
+        }
     }
 }

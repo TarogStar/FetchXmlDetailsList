@@ -13,7 +13,7 @@ import {
     Spinner,
     TableRowId
 } from '@fluentui/react-components';
-import { IDynamicDetailsListState, ICustomButtonConfig } from './types';
+import { IDynamicDetailsListState, ICustomButtonConfig, ILegacyColumn } from './types';
 import { CommandBar } from './CommandBar';
 
 export interface DataGridWrapperProps {
@@ -24,7 +24,8 @@ export interface DataGridWrapperProps {
     onRefresh: () => void;
     customButtonConfig?: ICustomButtonConfig;
     onCustomButtonClick?: () => void;
-    minTableWidth?: number; // new: total min width of all columns
+    minTableWidth?: number;
+    legacyColumns?: ILegacyColumn[];
     hideNewButton?: boolean;
     hideRefreshButton?: boolean;
     hideExportButton?: boolean;
@@ -40,14 +41,19 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
     customButtonConfig,
     onCustomButtonClick,
     minTableWidth,
+    legacyColumns,
     hideNewButton,
     hideRefreshButton,
     hideExportButton,
     hideBulkEditButton
 }) => {
-    const { columns, items, announcedMessage } = state;
+    const { columns, announcedMessage } = state;
+    // Filter to only items with a valid row ID to prevent undefined keys in selection
+    const items = (state.items || []).filter(
+        (item: any) => item?.__rowId || item?.[primaryEntityName + 'id']
+    );
 
-    if (items && columns && columns.length > 0) {
+    if (items.length > 0 && columns && columns.length > 0) {
         return (
             <FluentProvider theme={webLightTheme} className="fluent-root">
                 <div className="full-size container">
@@ -59,6 +65,7 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
                         onRefresh={onRefresh}
                         customButtonConfig={customButtonConfig}
                         onCustomButtonClick={onCustomButtonClick}
+                        legacyColumns={legacyColumns}
                         hideNewButton={hideNewButton}
                         hideRefreshButton={hideRefreshButton}
                         hideExportButton={hideExportButton}
@@ -87,8 +94,8 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
                             >
                                 <DataGridHeader>
                                     <DataGridRow>
-                                        {({ renderHeaderCell }: any) => (
-                                            <DataGridHeaderCell key={renderHeaderCell.key || Math.random()}>{renderHeaderCell()}</DataGridHeaderCell>
+                                        {(column: any) => (
+                                            <DataGridHeaderCell key={column.columnId}>{column.renderHeaderCell()}</DataGridHeaderCell>
                                         )}
                                     </DataGridRow>
                                 </DataGridHeader>
@@ -120,9 +127,9 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
                                                 }
                                             }}
                                         >
-                                            {({ renderCell }: any) => (
-                                                <DataGridCell key={`${rowId}-${renderCell.key || Math.random()}`}>
-                                                    {renderCell(item)}
+                                            {(column: any) => (
+                                                <DataGridCell key={`${rowId}-${column.columnId}`}>
+                                                    {column.renderCell(item)}
                                                 </DataGridCell>
                                             )}
                                         </DataGridRow>

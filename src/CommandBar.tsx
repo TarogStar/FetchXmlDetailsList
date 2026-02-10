@@ -14,7 +14,7 @@ import {
 import { ExportToCSVUtil } from './GridExport';
 import { TableRowId } from '@fluentui/react-components';
 import { AddIcon, RefreshIcon, DownloadIcon, MoreIcon } from './icons/CustomIcons';
-import { ICustomButtonConfig } from './types';
+import { ICustomButtonConfig, ILegacyColumn } from './types';
 
 export interface CommandBarProps {
     primaryEntityName: string;
@@ -24,6 +24,7 @@ export interface CommandBarProps {
     onRefresh: () => void;
     customButtonConfig?: ICustomButtonConfig;
     onCustomButtonClick?: () => void;
+    legacyColumns?: ILegacyColumn[];
     hideNewButton?: boolean;
     hideRefreshButton?: boolean;
     hideExportButton?: boolean;
@@ -38,6 +39,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
     onRefresh,
     customButtonConfig,
     onCustomButtonClick,
+    legacyColumns,
     hideNewButton,
     hideRefreshButton,
     hideExportButton,
@@ -62,14 +64,13 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     const meta = await utils.getEntityMetadata(primaryEntityName, []);
                     const label = meta?.DisplayName?.UserLocalizedLabel?.Label
                         || meta?.DisplayName?.LocalizedLabels?.[0]?.Label
-                        || meta?.SchemaName
-                        || entityDisplayName;
+                        || meta?.SchemaName;
                     if (!cancelled && label) {
                         setEntityDisplayName(label);
                     }
                 }
             } catch (e) {
-                // Silent fallback � keep the heuristic name
+                // Silent fallback — keep the heuristic name
                 if (pcfContext?.parameters?.DebugMode?.raw === '1') {
                     // eslint-disable-next-line no-console
                     console.log('Failed to get entity metadata display name:', e);
@@ -88,7 +89,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
     };
 
     const handleExport = () => {
-        ExportToCSVUtil(items, `${primaryEntityName}-export-${Date.now()}.csv`);
+        ExportToCSVUtil(items, `${primaryEntityName}-export-${Date.now()}.csv`, legacyColumns);
     };
 
     const handleCustomButtonClickInternal = () => {

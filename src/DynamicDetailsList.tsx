@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { TableRowId } from '@fluentui/react-components';
-import { IDynamicDetailsListProps, IDynamicDetailsListState, ILegacyColumn, ICustomButtonConfig } from './types';
+import { IDynamicDetailsListProps, IDynamicDetailsListState, ILegacyColumn, ICustomButtonConfig, IColumnDataStructure } from './types';
 import { DataService } from './dataService';
 import { CellRenderer } from './CellRenderer';
 import { DataGridWrapper } from './DataGridWrapper';
 import { compareValues, normalizeColumns } from './columnUtils';
 import { openCustomPage } from './utils/customPageNavigation';
 
-export class DynamicDetailsList extends React.Component<any, IDynamicDetailsListState> {
+export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps, IDynamicDetailsListState> {
     private _allItems: any[];
     private _pcfContext: any;
     private _primaryEntityName: string;
@@ -22,13 +22,26 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
     private _legacyColumns: ILegacyColumn[] = [];
 
     private ensureRowIds(items: any[], primaryEntityName: string): any[] {
-        return (items || []).map((item: any, index: number) => {
+        const seen = new Map<string, number>();
+        return (items || []).map((item: any) => {
             if (!item || typeof item !== 'object') return item;
+            if (item.__rowId) return item;
+
             const primaryId = item[primaryEntityName + 'id'];
-            return {
-                ...item,
-                __rowId: item.__rowId || primaryId || `row-${index}`
-            };
+            // Build a deterministic fallback from all non-metadata field values
+            // Sort keys to guarantee stable order regardless of JS engine behavior
+            const baseId = primaryId || Object.keys(item)
+                .filter(k => !k.startsWith('@') && k !== '__rowId')
+                .sort()
+                .map(k => String(item[k] ?? ''))
+                .join('|');
+
+            // Deduplicate: if two rows produce the same key, append a counter
+            const count = seen.get(baseId) || 0;
+            seen.set(baseId, count + 1);
+            const rowId = count === 0 ? baseId : `${baseId}__${count}`;
+
+            return { ...item, __rowId: rowId };
         });
     }
 
@@ -44,7 +57,7 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
         }
 
         // Select only this row (clear others) - Dataverse behavior
-        const newSelection = new Set<string>([rowId]);
+        const newSelection = new Set<TableRowId>([rowId]);
         this.setState({
             selectedRowIds: newSelection,
             focusedCellId: cellId
@@ -65,14 +78,14 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
         return cellRenderer.renderItemColumn();
     }
 
-    constructor(props: any) {
+    constructor(props: IDynamicDetailsListProps) {
         super(props);
 
         this._pcfContext = props.context;
-        this._primaryEntityName = props.primaryEntityName;
-        this._fetchXml = props.fetchXml;
-        this._allItems = props.items;
-        this._isDebugMode = props.isDebugMode;
+        this._primaryEntityName = props.primaryEntityName || '';
+        this._fetchXml = props.fetchXml ?? '';
+        this._allItems = props.items || [];
+        this._isDebugMode = props.isDebugMode || false;
         this._baseEnvironmentUrl = props.baseD365Url;
 
         // Parse custom button configuration from JSON string
@@ -99,12 +112,48 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
             fetchXml: this._fetchXml,
             primaryEntityName: this._primaryEntityName,
             announcedMessage: undefined,
-            selectedRowIds: new Set<string>(),
+            selectedRowIds: new Set<TableRowId>(),
             focusedCellId: undefined
         };
+    }
 
-        // Initialize data loading
+    componentDidMount() {
         this.loadData();
+    }
+
+    componentDidUpdate(prevProps: IDynamicDetailsListProps) {
+        let shouldReload = false;
+
+        if (prevProps.fetchXml !== this.props.fetchXml) {
+            this._fetchXml = this.props.fetchXml || '';
+            shouldReload = true;
+        }
+
+        if (prevProps.columns !== this.props.columns) {
+            try {
+                this._legacyColumns = normalizeColumns(this.props.columns);
+            } catch {
+                this._legacyColumns = [];
+            }
+            shouldReload = true;
+        }
+
+        if (prevProps.CustomButtonConfig !== this.props.CustomButtonConfig) {
+            if (this.props.CustomButtonConfig) {
+                try {
+                    this._customButtonConfig = JSON.parse(this.props.CustomButtonConfig);
+                } catch (error) {
+                    console.error('Failed to parse custom button configuration:', error);
+                    this._customButtonConfig = undefined;
+                }
+            } else {
+                this._customButtonConfig = undefined;
+            }
+        }
+
+        if (shouldReload) {
+            this.loadData();
+        }
     }
 
     private async loadData() {
@@ -124,11 +173,18 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
 
             const itemsWithRowIds = this.ensureRowIds(result.items, result.primaryEntityName);
 
+            // Trim stale selection to only IDs present in new data
+            const validIds = new Set(itemsWithRowIds.map((item: any) => item.__rowId as TableRowId));
+            const trimmedSelection = new Set<TableRowId>(
+                Array.from(this.state.selectedRowIds).filter(id => validIds.has(id))
+            );
+
             this.setState({
                 items: itemsWithRowIds,
                 columns: result.columns,
                 primaryEntityName: result.primaryEntityName,
-                announcedMessage: result.announcedMessage
+                announcedMessage: result.announcedMessage,
+                selectedRowIds: trimmedSelection
             });
         } catch (error) {
             console.error('Error loading data:', error);
@@ -188,6 +244,7 @@ export class DynamicDetailsList extends React.Component<any, IDynamicDetailsList
                 customButtonConfig={this._customButtonConfig}
                 onCustomButtonClick={this.handleCustomButtonClick}
                 minTableWidth={this.getTotalMinWidth()}
+                legacyColumns={this._legacyColumns}
                 hideNewButton={this.props.hideNewButton}
                 hideRefreshButton={this.props.hideRefreshButton}
                 hideExportButton={this.props.hideExportButton}

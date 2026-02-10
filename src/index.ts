@@ -40,7 +40,7 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
         this._isDebugMode = false;
         
         if (this._context.parameters.DebugMode) {
-            this._isDebugMode = this._context.parameters.DebugMode.raw == "1";
+            this._isDebugMode = this._context.parameters.DebugMode.raw === "1";
         }
 
         // If you want this to break every time you set isDebugMode to true
@@ -50,8 +50,8 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
 
         
         // TODO: Validate the input parameters to make sure we get a friendly error instead of weird errors
-        var fetchXML : string | null = this._context.parameters.FetchXml.raw; 
-        var recordIdPlaceholder : string | null = this._context.parameters.RecordIdPlaceholder?.raw ?? "[RECORDID]";  
+        let fetchXML : string | null = this._context.parameters.FetchXml.raw;
+        const recordIdPlaceholder : string | null = this._context.parameters.RecordIdPlaceholder?.raw ?? "[RECORDID]";  
     
         // const recordIdLookupValue: ComponentFramework.EntityReference = this._context.parameters.RecordId.raw[0];
 
@@ -64,7 +64,7 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
         catch(ex){
             this._baseEnvironmentUrl = "https://localhost";
         }
-        var recordId : string = entityId; //this._context.parameters.RecordId.raw ?? currentRecordId;
+        let recordId : string = entityId;
 
         const overriddenRecordId = this._context.parameters.OverriddenRecordIdFieldName?.raw;
         if (overriddenRecordId && overriddenRecordId.length > 0 && overriddenRecordId[0]?.id) {
@@ -77,7 +77,7 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
         // Update FetchXml, replace Record Id Placeholder with an actual Id
         // Grab primary entity Name from FetchXml
         // Test harness always initially passes in "val", so we can skip the following
-        if (fetchXML != null && fetchXML != "val") {
+        if (fetchXML !== null && fetchXML !== "val") {
             fetchXML =  fetchXML.replace(/"/g, "'");
             this._primaryEntityName = this.getPrimaryEntityNameFromFetchXml(fetchXML);
             // Replace the placeholder     
@@ -96,7 +96,7 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
 
         // Column Layout provides field ordering, names, and widths
         let columnLayoutJson = this._context.parameters.ColumnLayoutJson.raw;
-        this._columnLayout = columnLayoutJson != null && columnLayoutJson != "val" ? JSON.parse(columnLayoutJson) : null;
+        this._columnLayout = columnLayoutJson !== null && columnLayoutJson !== "val" ? JSON.parse(columnLayoutJson) : null;
 
         //this._currentPageNumber = 1;
 
@@ -109,18 +109,13 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
 
     private replacePlaceholderWithId(fetchXML: string, recordId: string, recordIdPlaceholder: string) : string {
         if (recordId && recordIdPlaceholder) {
-            if (fetchXML.indexOf(recordIdPlaceholder) > -1) {
-                //return fetchXML.replace(recordIdPlaceholder, recordId); // only replaces first occurrence of string       
-                return this.replaceAll(fetchXML, recordIdPlaceholder, recordId);
+            if (fetchXML.includes(recordIdPlaceholder)) {
+                // Escape special regex characters in the placeholder, then replace all occurrences
+                const escaped = recordIdPlaceholder.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+                return fetchXML.replace(new RegExp(escaped, 'g'), recordId);
             }
         }
         return fetchXML;
-    }
-
-    // Replace ALL occurrences of a string
-    private replaceAll(source: string, find: string, replace: string) : string{
-        // eslint-disable-next-line no-useless-escape
-        return source.replace(new RegExp(find.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), replace);
     }
     
     private getPrimaryEntityNameFromFetchXml(fetchXml: string): string {
