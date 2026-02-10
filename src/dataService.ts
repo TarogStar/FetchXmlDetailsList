@@ -37,7 +37,6 @@ export class DataService {
             console.log("DataService primaryEntityName", primaryEntityName);
             console.log("DataService fetchXml", fetchXml);
             console.log("DataService columnLayout", tableColumns);
-            debugger;  // eslint-disable-line no-debugger
         }
 
         if (isAuthoringMode) {
@@ -92,7 +91,6 @@ export class DataService {
             } catch (error: any) {
                 if (this.isDebugMode) {
                     console.log(error);
-                    debugger; // eslint-disable-line no-debugger
                 }
                 return {
                     items: [],

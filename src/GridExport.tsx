@@ -63,5 +63,6 @@ export const ExportToCSVUtil = (exportData: any[], fileName: string, columns?: I
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
 }

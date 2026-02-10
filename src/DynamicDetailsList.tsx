@@ -2,7 +2,7 @@ import * as React from 'react';
 import { TableRowId } from '@fluentui/react-components';
 import { IDynamicDetailsListProps, IDynamicDetailsListState, ILegacyColumn, ICustomButtonConfig, IColumnDataStructure } from './types';
 import { DataService } from './dataService';
-import { CellRenderer } from './CellRenderer';
+import { renderItemColumn } from './CellRenderer';
 import { DataGridWrapper } from './DataGridWrapper';
 import { compareValues, normalizeColumns } from './columnUtils';
 import { openCustomPage } from './utils/customPageNavigation';
@@ -65,7 +65,7 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
     }
 
     private _renderItemColumn = (item: any, _index: number | undefined, column: ILegacyColumn): JSX.Element => {
-        const cellRenderer = new CellRenderer({
+        return renderItemColumn({
             item,
             column,
             primaryEntityName: this._primaryEntityName,
@@ -74,8 +74,6 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
             pcfContext: this._pcfContext,
             onCellClick: this.handleCellClick
         });
-
-        return cellRenderer.renderItemColumn();
     }
 
     constructor(props: IDynamicDetailsListProps) {

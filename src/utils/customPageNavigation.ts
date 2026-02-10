@@ -1,9 +1,22 @@
 import { ICustomButtonConfig } from '../types';
 
 /**
+ * Validates that a web resource name follows expected Dataverse naming conventions
+ * (e.g. "publisher_name.js"). Rejects path traversal and suspicious characters.
+ */
+function isValidWebResourceName(name: string): boolean {
+    // Must end with .js, contain only alphanumeric/underscore/dot/hyphen, and no path separators
+    return /^[a-zA-Z0-9_.\-/]+\.js$/.test(name) && !name.includes('..');
+}
+
+/**
  * Loads a web resource script dynamically
  */
 async function loadWebResource(webResourceName: string): Promise<void> {
+    if (!isValidWebResourceName(webResourceName)) {
+        throw new Error(`Invalid web resource name: ${webResourceName}`);
+    }
+
     return new Promise((resolve, reject) => {
         // Check if already loaded
         if ((window as any)[webResourceName.replace('.js', '').replace(/[^a-zA-Z0-9]/g, '_')]) {

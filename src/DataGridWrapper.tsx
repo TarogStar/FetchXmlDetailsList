@@ -53,6 +53,16 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
         (item: any) => item?.__rowId || item?.[primaryEntityName + 'id']
     );
 
+    const openRecord = (item: any) => {
+        const id = item?.[primaryEntityName + 'id'];
+        if (id) {
+            pcfContext.navigation.openForm({
+                entityName: primaryEntityName,
+                entityId: id
+            });
+        }
+    };
+
     if (items.length > 0 && columns && columns.length > 0) {
         return (
             <FluentProvider theme={webLightTheme} className="fluent-root">
@@ -85,7 +95,7 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
                                 sortable
                                 selectionMode="multiselect"
                                 getRowId={(item: any) => item.__rowId || item[primaryEntityName + 'id']}
-                                selectedItems={Array.from(state.selectedRowIds)}
+                                selectedItems={state.selectedRowIds}
                                 onSelectionChange={(_, data) => {
                                     onSelectionChange(new Set(Array.from(data.selectedItems)));
                                 }}
@@ -106,24 +116,12 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
                                             onClick={(e: React.MouseEvent) => {
                                                 if (e.detail === 2) {
                                                     e.stopPropagation();
-                                                    const id = (item as any)[primaryEntityName + 'id'];
-                                                    if (id) {
-                                                        pcfContext.navigation.openForm({
-                                                            entityName: primaryEntityName,
-                                                            entityId: id
-                                                        });
-                                                    }
+                                                    openRecord(item);
                                                 }
                                             }}
                                             onKeyDown={(e: React.KeyboardEvent) => {
                                                 if (e.key === 'Enter') {
-                                                    const id = (item as any)[primaryEntityName + 'id'];
-                                                    if (id) {
-                                                        pcfContext.navigation.openForm({
-                                                            entityName: primaryEntityName,
-                                                            entityId: id
-                                                        });
-                                                    }
+                                                    openRecord(item);
                                                 }
                                             }}
                                         >

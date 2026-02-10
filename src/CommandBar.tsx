@@ -7,9 +7,7 @@ import {
     MenuTrigger,
     MenuPopover,
     MenuList,
-    MenuItem,
-    FluentProvider,
-    webLightTheme
+    MenuItem
 } from '@fluentui/react-components';
 import { ExportToCSVUtil } from './GridExport';
 import { TableRowId } from '@fluentui/react-components';
@@ -104,7 +102,6 @@ export const CommandBar: React.FC<CommandBarProps> = ({
         && (customButtonConfig.showWhenSelectedMax === undefined || selectedCount <= customButtonConfig.showWhenSelectedMax);
 
     return (
-        <FluentProvider theme={webLightTheme}>
             <Toolbar
                 aria-label="Dataverse Grid Commands"
                 style={{
@@ -178,6 +175,5 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     </Menu>
                 )}
             </Toolbar>
-        </FluentProvider>
     );
 };

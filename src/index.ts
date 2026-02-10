@@ -96,7 +96,16 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
 
         // Column Layout provides field ordering, names, and widths
         let columnLayoutJson = this._context.parameters.ColumnLayoutJson.raw;
-        this._columnLayout = columnLayoutJson !== null && columnLayoutJson !== "val" ? JSON.parse(columnLayoutJson) : null;
+        if (columnLayoutJson !== null && columnLayoutJson !== "val") {
+            try {
+                this._columnLayout = JSON.parse(columnLayoutJson);
+            } catch (e) {
+                console.error("FetchXmlDetailsList: Failed to parse ColumnLayoutJson. Please verify your JSON configuration.", e);
+                this._columnLayout = [];
+            }
+        } else {
+            this._columnLayout = [];
+        }
 
         //this._currentPageNumber = 1;
 
@@ -120,7 +129,6 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
     
     private getPrimaryEntityNameFromFetchXml(fetchXml: string): string {
         let primaryEntityName: string = "";
-        // @ts-ignore
         let filter = fetchXml.matchAll(/<entity name='(.*?)'>/g).next();
         if (filter && filter.value && filter.value[1]) {
             primaryEntityName = filter.value[1];

@@ -67,13 +67,15 @@ export function compareValues(a: any, b: any, column: ILegacyColumn): number {
     let aValue = a[column.fieldName];
     let bValue = b[column.fieldName];
 
-    // Handle combined fields - use the first non-null value from joinValuesFromTheseFields
+    // Handle combined fields - use the first non-null value from the primary field and joinValuesFromTheseFields
     if (column.data && column.data.joinValuesFromTheseFields) {
+        const fieldsToCheck = [column.fieldName, ...column.data.joinValuesFromTheseFields];
+
         aValue = null;
         bValue = null;
 
         // Find first non-null value for a
-        for (const fieldName of column.data.joinValuesFromTheseFields) {
+        for (const fieldName of fieldsToCheck) {
             if (a[fieldName] !== null && a[fieldName] !== undefined && a[fieldName] !== '') {
                 aValue = a[fieldName];
                 break;
@@ -81,7 +83,7 @@ export function compareValues(a: any, b: any, column: ILegacyColumn): number {
         }
 
         // Find first non-null value for b
-        for (const fieldName of column.data.joinValuesFromTheseFields) {
+        for (const fieldName of fieldsToCheck) {
             if (b[fieldName] !== null && b[fieldName] !== undefined && b[fieldName] !== '') {
                 bValue = b[fieldName];
                 break;
