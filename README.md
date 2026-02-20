@@ -77,7 +77,7 @@ i.e. <code>[RECORDID]</code>
 - <code>ColumnLayoutJson</code> is a collection of columns used for the table layout.  See details below.
 - <code>ItemsPerPage</code> is defaults to 5000 as paging is currently not implemented.  // [NOT SUPPORTED CURRENTLY] ItemsPerPage is how many items to show per page. For now this is set at 5000 since paging and sorting seem to be at odds with each other.
 - <code>DebugMode</code> can be set to <code>On</code> or <code>Off</code>.  When enabled, this will write extra details to console, break when entering the main control, and break on handled exceptions.
-- <code>CustomButtonConfig</code> adds a custom button to the command bar. This can either open a Custom Page or call a web resource function. See <a href="#CustomButtons">Custom Buttons</a> below.
+- <code>CustomButtonConfig</code> adds one or more custom buttons to the command bar. Accepts either a single button object or an array of button objects. Each button can open a Custom Page or call a web resource function. See <a href="#CustomButtons">Custom Buttons</a> below for complete documentation.
 - <code>HideNewButton</code> hides the built-in <code>+ New</code> button when set to <code>On</code>.
 - <code>HideRefreshButton</code> hides the built-in <code>Refresh</code> button when set to <code>On</code>.
 - <code>HideExportButton</code> hides the built-in <code>Export</code> button when set to <code>On</code>.
@@ -207,7 +207,9 @@ ColumnLayoutJson Example:
 ````
 
 ## <a name="CustomButtons"></a>Custom Buttons
-You can add a custom command bar button by setting the <code>CustomButtonConfig</code> input parameter. This configuration supports two approaches:
+You can add one or more custom command bar buttons by setting the <code>CustomButtonConfig</code> input parameter. The configuration supports both **single button** (legacy) and **multiple buttons** (array) formats for backward compatibility.
+
+Each button configuration supports two approaches:
 
 1) **Custom Page** (no web resource code required)
    - The button opens a Custom Page dialog using <code>Xrm.Navigation.navigateTo</code>.
@@ -217,8 +219,8 @@ You can add a custom command bar button by setting the <code>CustomButtonConfig<
    - The button loads a JS web resource and calls a function you provide.
    - Use this if you want to handle input and record creation directly via script.
 
-### Custom Page Example (recommended)
-Set <code>CustomButtonConfig</code> to open a Custom Page:
+### Single Button Example (Backward Compatible)
+Set <code>CustomButtonConfig</code> to a single button configuration object:
 
 ```json
 {
@@ -232,15 +234,86 @@ Set <code>CustomButtonConfig</code> to open a Custom Page:
 }
 ```
 
+### Multiple Buttons Example (New)
+Set <code>CustomButtonConfig</code> to an **array** of button configuration objects:
+
+```json
+[
+  {
+    "buttonText": "Record Usage",
+    "customPageName": "new_usagepage_12345",
+    "dialogTitle": "Record Usage",
+    "dialogWidth": 60,
+    "dialogHeight": 50,
+    "showWhenSelectedMin": 1,
+    "showWhenSelectedMax": 1
+  },
+  {
+    "buttonText": "Bulk Update",
+    "customPageName": "new_bulkupdatepage_67890",
+    "dialogTitle": "Bulk Update Selected Items",
+    "dialogWidth": 70,
+    "dialogHeight": 60,
+    "showWhenSelectedMin": 2
+  },
+  {
+    "buttonText": "View Details",
+    "functionName": "MyNamespace.viewDetails",
+    "customPageName": "new_detailspage_11111",
+    "webResourceName": "new_/MyScripts.js",
+    "dialogTitle": "Item Details",
+    "showWhenSelectedMin": 1,
+    "showWhenSelectedMax": 1
+  }
+]
+```
+
+### Button Configuration Properties
+
+| Property | Required | Type | Description |
+| --- | --- | --- | --- |
+| buttonText | Yes | String | The text displayed on the button in the command bar |
+| customPageName | Yes | String | The unique name of the Custom Page to open |
+| functionName | No | String | JavaScript function to call (format: `Namespace.functionName`) |
+| webResourceName | No | String | Path to the web resource containing the function (e.g., `new_/MyScripts.js`) |
+| dialogTitle | No | String | Title shown in the Custom Page dialog |
+| dialogWidth | No | Number | Dialog width as percentage (e.g., `60` for 60%) |
+| dialogHeight | No | Number | Dialog height as percentage (e.g., `50` for 50%) |
+| showWhenSelectedMin | No | Number | Minimum number of rows that must be selected for button to appear |
+| showWhenSelectedMax | No | Number | Maximum number of rows that can be selected for button to appear |
+
+### Button Visibility Rules
+- If **neither** `showWhenSelectedMin` nor `showWhenSelectedMax` is specified, the button is **always visible**.
+- If `showWhenSelectedMin` is specified, the button only appears when **at least** that many rows are selected.
+- If `showWhenSelectedMax` is specified, the button only appears when **at most** that many rows are selected.
+- Both properties can be used together to define a range (e.g., `"showWhenSelectedMin": 1, "showWhenSelectedMax": 5` shows the button only when 1-5 rows are selected).
+
+### Data Passed to Custom Pages and Functions
+
 When the button is clicked, the control passes the following data to the Custom Page via the <code>pageInput.data</code> payload:
 - <code>parentRecordId</code> (the host form record id)
 - <code>selectedRowIds</code> (array of selected row ids)
 - <code>selectedRecords</code> (array of full row objects)
 
-**What to do in the Custom Page**
+**What to do in the Custom Page:**
 - Read the selected record ID from the page context (you can pass it as the parent record).
-- Prompt the user for a quantity.
-- Create the usage record in Dataverse using your logic.
+- Prompt the user for input or display information.
+- Create or update records in Dataverse using your logic.
+
+### Custom Page Example (Recommended)
+Custom Pages are the recommended approach as they don't require web resource code:
+
+```json
+{
+  "buttonText": "Record Usage",
+  "customPageName": "new_usagepage_12345",
+  "dialogTitle": "Record Usage",
+  "dialogWidth": 60,
+  "dialogHeight": 50,
+  "showWhenSelectedMin": 1,
+  "showWhenSelectedMax": 1
+}
+```
 
 ### Web Resource Function Example
 Set <code>CustomButtonConfig</code> to load a web resource and call your function:
@@ -286,10 +359,66 @@ MyUsage.record = async function(formContext, customPageName, customData) {
 
 When using a web resource function, the control passes the same data object as the third argument (<code>customData</code>).
 
+### Use Cases for Multiple Buttons
+
+**Example 1: Different actions based on selection count**
+```json
+[
+  {
+    "buttonText": "Edit Item",
+    "customPageName": "new_editpage",
+    "showWhenSelectedMin": 1,
+    "showWhenSelectedMax": 1
+  },
+  {
+    "buttonText": "Bulk Update",
+    "customPageName": "new_bulkupdatepage",
+    "showWhenSelectedMin": 2
+  }
+]
+```
+- "Edit Item" appears only when exactly one row is selected
+- "Bulk Update" appears only when two or more rows are selected
+
+**Example 2: Multiple workflow actions**
+```json
+[
+  {
+    "buttonText": "Approve",
+    "functionName": "Workflows.approve",
+    "webResourceName": "new_/Workflows.js",
+    "customPageName": "new_approvepage",
+    "showWhenSelectedMin": 1
+  },
+  {
+    "buttonText": "Reject",
+    "functionName": "Workflows.reject",
+    "webResourceName": "new_/Workflows.js",
+    "customPageName": "new_rejectpage",
+    "showWhenSelectedMin": 1
+  },
+  {
+    "buttonText": "Request Info",
+    "customPageName": "new_requestinfopage",
+    "showWhenSelectedMin": 1,
+    "showWhenSelectedMax": 5
+  }
+]
+```
+
+### Implementation Notes
+- Each button in the array is independent with its own click handler and configuration
+- Buttons are rendered in the order they appear in the array
+- The component automatically filters which buttons to display based on the current selection count and the `showWhenSelectedMin`/`showWhenSelectedMax` rules
+- All buttons use the same data structure for passing context (parentRecordId, selectedRowIds, selectedRecords)
+- **Backward Compatibility:** Existing single-object configurations continue to work without any changes
+
 ### Notes
-- The button appears in the grid command bar next to the built-in buttons.
-- If you want to require row selection before running the action, update the handler in <code>DynamicDetailsList.tsx</code> to check the selected rows before invoking your logic.
-- If you need to hide the built-in <code>+ New</code> button, add a custom input flag and conditionally render it in <code>CommandBar.tsx</code>.
+- All buttons appear in the grid command bar next to the built-in buttons
+- Multiple buttons are displayed in the order they appear in the configuration array
+- Each button can have different visibility rules based on row selection
+- The same Custom Page can be reused across multiple buttons with different configurations
+- When no rows are selected, only buttons without `showWhenSelectedMin` will be visible
 ## Initial Configuration Tips
 If you have DebugMode turned on you can see in the console log three important items: `DynamicDetailsList fetchXml` (with the RecordIdPlaceholder replaced), `DynamicDetailsList columnLayout `, and `webAPI.retrieveMultipleRecords : this._allItems` which shows the records returned.
 ![Alt text](img/DebugModeOn-ShowConsoleLog.png)

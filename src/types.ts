@@ -35,6 +35,12 @@ export interface ICustomButtonConfig {
     showWhenSelectedMax?: number;
 }
 
+// Component that combines button configuration with its click handler
+export interface ICustomButtonComponent {
+    config: ICustomButtonConfig;
+    onClick: () => void;
+}
+
 export interface IDynamicDetailsListProps {
     items?: any[];
     columns: IColumnDataStructure | ILegacyColumn[] | TableColumnDefinition<any>[];

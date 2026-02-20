@@ -12,7 +12,7 @@ import {
 import { ExportToCSVUtil } from './GridExport';
 import { TableRowId } from '@fluentui/react-components';
 import { AddIcon, RefreshIcon, DownloadIcon, MoreIcon } from './icons/CustomIcons';
-import { ICustomButtonConfig, ILegacyColumn } from './types';
+import { ICustomButtonComponent, ILegacyColumn } from './types';
 
 export interface CommandBarProps {
     primaryEntityName: string;
@@ -20,8 +20,7 @@ export interface CommandBarProps {
     items: any[];
     selectedItems: Set<TableRowId>;
     onRefresh: () => void;
-    customButtonConfig?: ICustomButtonConfig;
-    onCustomButtonClick?: () => void;
+    customButtonComponents?: ICustomButtonComponent[];
     legacyColumns?: ILegacyColumn[];
     hideNewButton?: boolean;
     hideRefreshButton?: boolean;
@@ -35,8 +34,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
     items,
     selectedItems,
     onRefresh,
-    customButtonConfig,
-    onCustomButtonClick,
+    customButtonComponents,
     legacyColumns,
     hideNewButton,
     hideRefreshButton,
@@ -90,16 +88,14 @@ export const CommandBar: React.FC<CommandBarProps> = ({
         ExportToCSVUtil(items, `${primaryEntityName}-export-${Date.now()}.csv`, legacyColumns);
     };
 
-    const handleCustomButtonClickInternal = () => {
-        if (onCustomButtonClick) {
-            onCustomButtonClick();
-        }
-    };
-
     const selectedCount = selectedItems.size;
-    const showCustomButton = !!customButtonConfig
-        && (customButtonConfig.showWhenSelectedMin === undefined || selectedCount >= customButtonConfig.showWhenSelectedMin)
-        && (customButtonConfig.showWhenSelectedMax === undefined || selectedCount <= customButtonConfig.showWhenSelectedMax);
+
+    // Filter visible custom buttons based on selection count
+    const visibleCustomButtons = (customButtonComponents || []).filter(buttonComponent => {
+        const config = buttonComponent.config;
+        return (config.showWhenSelectedMin === undefined || selectedCount >= config.showWhenSelectedMin)
+            && (config.showWhenSelectedMax === undefined || selectedCount <= config.showWhenSelectedMax);
+    });
 
     return (
             <Toolbar
@@ -120,14 +116,15 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     </ToolbarButton>
                 )}
 
-                {showCustomButton && customButtonConfig && (
+                {visibleCustomButtons.map((buttonComponent, index) => (
                     <ToolbarButton
+                        key={`custom-button-${index}`}
                         icon={<AddIcon />}
-                        onClick={handleCustomButtonClickInternal}
+                        onClick={buttonComponent.onClick}
                     >
-                        {customButtonConfig.buttonText}
+                        {buttonComponent.config.buttonText}
                     </ToolbarButton>
-                )}
+                ))}
 
                 <ToolbarDivider />
 
