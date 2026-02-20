@@ -191,6 +191,21 @@ export const SendIcon: React.FC<IconProps> = ({ className, style, size = 20 }) =
     </svg>
 );
 
+export const ZeroIcon: React.FC<IconProps> = ({ className, style, size = 20 }) => (
+    <svg
+        className={className}
+        style={style}
+        width={size}
+        height={size}
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path d="M10 2.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15ZM4 10a6 6 0 1 1 12 0 6 6 0 0 1-12 0Z" />
+        <path d="M10 6a2.5 2.5 0 0 0-2.5 2.5v3A2.5 2.5 0 0 0 10 14a2.5 2.5 0 0 0 2.5-2.5v-3A2.5 2.5 0 0 0 10 6Zm-1 2.5a1 1 0 0 1 2 0v3a1 1 0 1 1-2 0v-3Z" />
+    </svg>
+);
+
 // Type for icon names that can be used in button configurations
 export type CustomIconType = 
     | 'Add'
@@ -205,7 +220,8 @@ export type CustomIconType =
     | 'Calendar'
     | 'Info'
     | 'Settings'
-    | 'Send';
+    | 'Send'
+    | 'Zero';
 
 // Helper function to get icon component by name
 // Returns AddIcon (plus sign) as default for backward compatibility
@@ -242,6 +258,8 @@ export const getIconByName = (iconName?: CustomIconType): React.FC<IconProps> =>
             return SettingsIcon;
         case 'Send':
             return SendIcon;
+        case 'Zero':
+            return ZeroIcon;
         default:
             // Fallback for any unrecognized icon names
             return AddIcon;

@@ -304,6 +304,7 @@ You can customize the icon displayed on each button using the `icon` property. A
 | `Info` | Information circle | Details, information, help |
 | `Settings` | Gear | Configure, settings, options |
 | `Send` | Paper airplane | Send, submit, share |
+| `Zero` | Zero in circle | Zero out, reset values, clear data |
 | `Refresh` | Circular arrows | Refresh, reload, sync |
 | `Download` | Download arrow | Export, download |
 | `More` | Three dots | Additional options, menu |
@@ -322,6 +323,12 @@ You can customize the icon displayed on each button using the `icon` property. A
     "buttonText": "Approve",
     "icon": "Check",
     "customPageName": "new_approvepage",
+    "showWhenSelectedMin": 1
+  },
+  {
+    "buttonText": "Zero Out Values",
+    "icon": "Zero",
+    "customPageName": "new_zerooutpage",
     "showWhenSelectedMin": 1
   },
   {
