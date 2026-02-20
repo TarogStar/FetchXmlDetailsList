@@ -234,6 +234,8 @@ Set <code>CustomButtonConfig</code> to a single button configuration object:
 }
 ```
 
+**Note:** The `icon` property is optional. If not specified, the button will display the **Add** icon (plus sign) by default for backward compatibility with existing configurations.
+
 ### Multiple Buttons Example (New)
 Set <code>CustomButtonConfig</code> to an **array** of button configuration objects:
 
@@ -241,6 +243,7 @@ Set <code>CustomButtonConfig</code> to an **array** of button configuration obje
 [
   {
     "buttonText": "Record Usage",
+    "icon": "Clipboard",
     "customPageName": "new_usagepage_12345",
     "dialogTitle": "Record Usage",
     "dialogWidth": 60,
@@ -250,6 +253,7 @@ Set <code>CustomButtonConfig</code> to an **array** of button configuration obje
   },
   {
     "buttonText": "Bulk Update",
+    "icon": "Edit",
     "customPageName": "new_bulkupdatepage_67890",
     "dialogTitle": "Bulk Update Selected Items",
     "dialogWidth": 70,
@@ -258,6 +262,7 @@ Set <code>CustomButtonConfig</code> to an **array** of button configuration obje
   },
   {
     "buttonText": "View Details",
+    "icon": "Info",
     "functionName": "MyNamespace.viewDetails",
     "customPageName": "new_detailspage_11111",
     "webResourceName": "new_/MyScripts.js",
@@ -274,6 +279,7 @@ Set <code>CustomButtonConfig</code> to an **array** of button configuration obje
 | --- | --- | --- | --- |
 | buttonText | Yes | String | The text displayed on the button in the command bar |
 | customPageName | Yes | String | The unique name of the Custom Page to open |
+| icon | No | String | Icon to display (see [Available Icons](#available-icons) below). **Defaults to `Add` (plus sign) if not specified** for backward compatibility |
 | functionName | No | String | JavaScript function to call (format: `Namespace.functionName`) |
 | webResourceName | No | String | Path to the web resource containing the function (e.g., `new_/MyScripts.js`) |
 | dialogTitle | No | String | Title shown in the Custom Page dialog |
@@ -281,6 +287,50 @@ Set <code>CustomButtonConfig</code> to an **array** of button configuration obje
 | dialogHeight | No | Number | Dialog height as percentage (e.g., `50` for 50%) |
 | showWhenSelectedMin | No | Number | Minimum number of rows that must be selected for button to appear |
 | showWhenSelectedMax | No | Number | Maximum number of rows that can be selected for button to appear |
+
+### <a name="available-icons"></a>Available Icons
+
+You can customize the icon displayed on each button using the `icon` property. Available icon options:
+
+| Icon Name | Description | Common Use Cases |
+| --- | --- | --- |
+| `Add` | Plus sign (default) | Create, add new items |
+| `Edit` | Pencil | Edit, modify records |
+| `Check` | Checkmark | Approve, confirm, mark complete |
+| `Delete` | Trash can | Delete, remove records |
+| `Clipboard` | Clipboard | Copy, duplicate, paste |
+| `Document` | Document/file | View documents, reports |
+| `Calendar` | Calendar | Schedule, date-related actions |
+| `Info` | Information circle | Details, information, help |
+| `Settings` | Gear | Configure, settings, options |
+| `Send` | Paper airplane | Send, submit, share |
+| `Refresh` | Circular arrows | Refresh, reload, sync |
+| `Download` | Download arrow | Export, download |
+| `More` | Three dots | Additional options, menu |
+
+**Example with icons:**
+```json
+[
+  {
+    "buttonText": "Edit Item",
+    "icon": "Edit",
+    "customPageName": "new_editpage",
+    "showWhenSelectedMin": 1,
+    "showWhenSelectedMax": 1
+  },
+  {
+    "buttonText": "Approve",
+    "icon": "Check",
+    "customPageName": "new_approvepage",
+    "showWhenSelectedMin": 1
+  },
+  {
+    "buttonText": "View Details",
+    "icon": "Info",
+    "customPageName": "new_detailspage"
+  }
+]
+```
 
 ### Button Visibility Rules
 - If **neither** `showWhenSelectedMin` nor `showWhenSelectedMax` is specified, the button is **always visible**.
@@ -366,12 +416,14 @@ When using a web resource function, the control passes the same data object as t
 [
   {
     "buttonText": "Edit Item",
+    "icon": "Edit",
     "customPageName": "new_editpage",
     "showWhenSelectedMin": 1,
     "showWhenSelectedMax": 1
   },
   {
     "buttonText": "Bulk Update",
+    "icon": "Settings",
     "customPageName": "new_bulkupdatepage",
     "showWhenSelectedMin": 2
   }
@@ -385,6 +437,7 @@ When using a web resource function, the control passes the same data object as t
 [
   {
     "buttonText": "Approve",
+    "icon": "Check",
     "functionName": "Workflows.approve",
     "webResourceName": "new_/Workflows.js",
     "customPageName": "new_approvepage",
@@ -392,6 +445,7 @@ When using a web resource function, the control passes the same data object as t
   },
   {
     "buttonText": "Reject",
+    "icon": "Delete",
     "functionName": "Workflows.reject",
     "webResourceName": "new_/Workflows.js",
     "customPageName": "new_rejectpage",
@@ -399,6 +453,7 @@ When using a web resource function, the control passes the same data object as t
   },
   {
     "buttonText": "Request Info",
+    "icon": "Send",
     "customPageName": "new_requestinfopage",
     "showWhenSelectedMin": 1,
     "showWhenSelectedMax": 5

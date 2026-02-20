@@ -1,4 +1,5 @@
 import { TableColumnDefinition, TableRowId } from '@fluentui/react-components';
+import { CustomIconType } from './icons/CustomIcons';
 
 // Interface for FluentUI v8 style column (what we receive from JSON)
 export interface ILegacyColumn {
@@ -33,6 +34,7 @@ export interface ICustomButtonConfig {
     dialogHeight?: number;
     showWhenSelectedMin?: number;
     showWhenSelectedMax?: number;
+    icon?: CustomIconType; // Optional icon name (defaults to 'Add' if not specified)
 }
 
 // Component that combines button configuration with its click handler

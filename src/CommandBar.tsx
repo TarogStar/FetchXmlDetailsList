@@ -11,7 +11,7 @@ import {
 } from '@fluentui/react-components';
 import { ExportToCSVUtil } from './GridExport';
 import { TableRowId } from '@fluentui/react-components';
-import { AddIcon, RefreshIcon, DownloadIcon, MoreIcon } from './icons/CustomIcons';
+import { AddIcon, RefreshIcon, DownloadIcon, MoreIcon, getIconByName } from './icons/CustomIcons';
 import { ICustomButtonComponent, ILegacyColumn } from './types';
 
 export interface CommandBarProps {
@@ -123,15 +123,18 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     </ToolbarButton>
                 )}
 
-                {visibleCustomButtons.map((buttonComponent, index) => (
-                    <ToolbarButton
-                        key={`custom-button-${index}`}
-                        icon={<AddIcon />}
-                        onClick={buttonComponent.onClick}
-                    >
-                        {buttonComponent.config.buttonText}
-                    </ToolbarButton>
-                ))}
+                {visibleCustomButtons.map((buttonComponent, index) => {
+                    const IconComponent = getIconByName(buttonComponent.config.icon);
+                    return (
+                        <ToolbarButton
+                            key={`custom-button-${index}`}
+                            icon={<IconComponent />}
+                            onClick={buttonComponent.onClick}
+                        >
+                            {buttonComponent.config.buttonText}
+                        </ToolbarButton>
+                    );
+                })}
 
                 <ToolbarDivider />
 
