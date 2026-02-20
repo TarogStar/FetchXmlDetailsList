@@ -232,6 +232,14 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
                 };
 
                 await openCustomPage(buttonConfig, this._pcfContext, recordId, customButtonData);
+                
+                // If autoRefreshDataOnComplete is enabled, refresh the grid data after successful completion
+                if (buttonConfig.autoRefreshDataOnComplete === true) {
+                    if (this._isDebugMode) {
+                        console.log('Auto-refreshing grid data after button action');
+                    }
+                    this.loadData();
+                }
             } catch (error) {
                 console.error('Failed to open custom page:', error);
             }

@@ -40,6 +40,7 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
         this._isDebugMode = false;
         
         if (this._context.parameters.DebugMode) {
+            // DebugMode is an Enum, raw value is "0" or "1" string
             this._isDebugMode = this._context.parameters.DebugMode.raw === "1";
         }
 

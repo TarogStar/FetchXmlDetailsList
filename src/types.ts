@@ -35,6 +35,7 @@ export interface ICustomButtonConfig {
     showWhenSelectedMin?: number;
     showWhenSelectedMax?: number;
     icon?: CustomIconType; // Optional icon name (defaults to 'Add' if not specified)
+    autoRefreshDataOnComplete?: boolean; // If true, automatically refreshes the grid data after the button action completes successfully
 }
 
 // Component that combines button configuration with its click handler

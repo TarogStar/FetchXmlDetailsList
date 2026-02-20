@@ -287,6 +287,7 @@ Set <code>CustomButtonConfig</code> to an **array** of button configuration obje
 | dialogHeight | No | Number | Dialog height as percentage (e.g., `50` for 50%) |
 | showWhenSelectedMin | No | Number | Minimum number of rows that must be selected for button to appear |
 | showWhenSelectedMax | No | Number | Maximum number of rows that can be selected for button to appear |
+| autoRefreshDataOnComplete | No | Boolean | If `true`, automatically refreshes the grid data after the button action completes successfully. **Defaults to `false`** for backward compatibility |
 
 ### <a name="available-icons"></a>Available Icons
 
@@ -309,13 +310,14 @@ You can customize the icon displayed on each button using the `icon` property. A
 | `Download` | Download arrow | Export, download |
 | `More` | Three dots | Additional options, menu |
 
-**Example with icons:**
+**Example with icons and auto-refresh:**
 ```json
 [
   {
     "buttonText": "Edit Item",
     "icon": "Edit",
     "customPageName": "new_editpage",
+    "autoRefreshDataOnComplete": true,
     "showWhenSelectedMin": 1,
     "showWhenSelectedMax": 1
   },
@@ -323,12 +325,14 @@ You can customize the icon displayed on each button using the `icon` property. A
     "buttonText": "Approve",
     "icon": "Check",
     "customPageName": "new_approvepage",
+    "autoRefreshDataOnComplete": true,
     "showWhenSelectedMin": 1
   },
   {
     "buttonText": "Zero Out Values",
     "icon": "Zero",
     "customPageName": "new_zerooutpage",
+    "autoRefreshDataOnComplete": true,
     "showWhenSelectedMin": 1
   },
   {
@@ -339,11 +343,45 @@ You can customize the icon displayed on each button using the `icon` property. A
 ]
 ```
 
+**Note:** The last button ("View Details") does not have `autoRefreshDataOnComplete` set, so the grid will not refresh after viewing details. The first three buttons will automatically refresh the grid data after their actions complete successfully.
+
 ### Button Visibility Rules
 - If **neither** `showWhenSelectedMin` nor `showWhenSelectedMax` is specified, the button is **always visible**.
 - If `showWhenSelectedMin` is specified, the button only appears when **at least** that many rows are selected.
 - If `showWhenSelectedMax` is specified, the button only appears when **at most** that many rows are selected.
 - Both properties can be used together to define a range (e.g., `"showWhenSelectedMin": 1, "showWhenSelectedMax": 5` shows the button only when 1-5 rows are selected).
+
+### Auto-Refresh Feature
+The `autoRefreshDataOnComplete` property controls whether the grid automatically reloads data after a button action completes successfully:
+
+- **`autoRefreshDataOnComplete: true`** - Grid data is automatically refreshed after the Custom Page closes or web resource function completes
+- **`autoRefreshDataOnComplete: false`** or **omitted** - Grid data is NOT refreshed (default behavior for backward compatibility)
+
+**When to use auto-refresh:**
+- ✅ Approve/Reject workflows that modify record status
+- ✅ Bulk update operations that change multiple records
+- ✅ Zero-out or calculation buttons that update numeric fields
+- ✅ Any action that modifies data visible in the grid
+
+**When NOT to use auto-refresh:**
+- ❌ Read-only operations (viewing details, reports)
+- ❌ Navigation actions that don't modify data
+- ❌ Actions that create new records unrelated to the current view
+
+**Example:**
+```json
+{
+  "buttonText": "Zero Out Balance",
+  "icon": "Zero",
+  "functionName": "MyApp.zeroBalance",
+  "webResourceName": "new_/MyApp.js",
+  "customPageName": "new_zerobalancepage",
+  "autoRefreshDataOnComplete": true,
+  "showWhenSelectedMin": 1
+}
+```
+
+In this example, after the zero balance operation completes, the grid will automatically refresh to show the updated balance values.
 
 ### Data Passed to Custom Pages and Functions
 
@@ -425,6 +463,7 @@ When using a web resource function, the control passes the same data object as t
     "buttonText": "Edit Item",
     "icon": "Edit",
     "customPageName": "new_editpage",
+    "autoRefreshDataOnComplete": true,
     "showWhenSelectedMin": 1,
     "showWhenSelectedMax": 1
   },
@@ -432,6 +471,7 @@ When using a web resource function, the control passes the same data object as t
     "buttonText": "Bulk Update",
     "icon": "Settings",
     "customPageName": "new_bulkupdatepage",
+    "autoRefreshDataOnComplete": true,
     "showWhenSelectedMin": 2
   }
 ]
@@ -439,7 +479,7 @@ When using a web resource function, the control passes the same data object as t
 - "Edit Item" appears only when exactly one row is selected
 - "Bulk Update" appears only when two or more rows are selected
 
-**Example 2: Multiple workflow actions**
+**Example 2: Multiple workflow actions with auto-refresh**
 ```json
 [
   {
@@ -448,6 +488,7 @@ When using a web resource function, the control passes the same data object as t
     "functionName": "Workflows.approve",
     "webResourceName": "new_/Workflows.js",
     "customPageName": "new_approvepage",
+    "autoRefreshDataOnComplete": true,
     "showWhenSelectedMin": 1
   },
   {
@@ -456,12 +497,14 @@ When using a web resource function, the control passes the same data object as t
     "functionName": "Workflows.reject",
     "webResourceName": "new_/Workflows.js",
     "customPageName": "new_rejectpage",
+    "autoRefreshDataOnComplete": true,
     "showWhenSelectedMin": 1
   },
   {
     "buttonText": "Request Info",
     "icon": "Send",
     "customPageName": "new_requestinfopage",
+    "autoRefreshDataOnComplete": false,
     "showWhenSelectedMin": 1,
     "showWhenSelectedMax": 5
   }
@@ -473,6 +516,7 @@ When using a web resource function, the control passes the same data object as t
 - Buttons are rendered in the order they appear in the array
 - The component automatically filters which buttons to display based on the current selection count and the `showWhenSelectedMin`/`showWhenSelectedMax` rules
 - All buttons use the same data structure for passing context (parentRecordId, selectedRowIds, selectedRecords)
+- When `autoRefreshDataOnComplete` is true, the grid data refreshes automatically after the button action completes successfully (both Custom Pages and web resource functions)
 - **Backward Compatibility:** Existing single-object configurations continue to work without any changes
 
 ### Notes
