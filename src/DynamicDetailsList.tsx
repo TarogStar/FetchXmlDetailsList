@@ -17,6 +17,7 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
     private _baseEnvironmentUrl?: string;
     private dataService: DataService;
     private _customButtonConfigs: ICustomButtonConfig[] = [];
+    private _customButtonComponents: ICustomButtonComponent[] = [];
 
     // Cache legacy columns for min width calculation
     private _legacyColumns: ILegacyColumn[] = [];
@@ -92,9 +93,18 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
             try {
                 const parsed = JSON.parse(props.CustomButtonConfig);
                 this._customButtonConfigs = Array.isArray(parsed) ? parsed : [parsed];
+                this._customButtonComponents = this.createCustomButtonComponents();
+                
+                if (this._isDebugMode) {
+                    console.log('DynamicDetailsList constructor: CustomButtonConfig raw =', props.CustomButtonConfig);
+                    console.log('DynamicDetailsList constructor: parsed =', parsed);
+                    console.log('DynamicDetailsList constructor: _customButtonConfigs =', this._customButtonConfigs);
+                    console.log('DynamicDetailsList constructor: _customButtonComponents =', this._customButtonComponents);
+                }
             } catch (error) {
                 console.error('Failed to parse custom button configuration:', error);
                 this._customButtonConfigs = [];
+                this._customButtonComponents = [];
             }
         }
 
@@ -144,12 +154,15 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
                 try {
                     const parsed = JSON.parse(this.props.CustomButtonConfig);
                     this._customButtonConfigs = Array.isArray(parsed) ? parsed : [parsed];
+                    this._customButtonComponents = this.createCustomButtonComponents();
                 } catch (error) {
                     console.error('Failed to parse custom button configuration:', error);
                     this._customButtonConfigs = [];
+                    this._customButtonComponents = [];
                 }
             } else {
                 this._customButtonConfigs = [];
+                this._customButtonComponents = [];
             }
         }
 
@@ -225,7 +238,10 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
         };
     }
 
-    private getCustomButtonComponents = (): ICustomButtonComponent[] => {
+    private createCustomButtonComponents = (): ICustomButtonComponent[] => {
+        if (this._isDebugMode) {
+            console.log('createCustomButtonComponents: _customButtonConfigs =', this._customButtonConfigs);
+        }
         return this._customButtonConfigs.map(config => ({
             config,
             onClick: this.createCustomButtonClickHandler(config)
@@ -250,7 +266,7 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
                     });
                 }}
                 onRefresh={this.handleRefresh}
-                customButtonComponents={this.getCustomButtonComponents()}
+                customButtonComponents={this._customButtonComponents}
                 minTableWidth={this.getTotalMinWidth()}
                 legacyColumns={this._legacyColumns}
                 hideNewButton={this.props.hideNewButton}

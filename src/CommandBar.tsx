@@ -97,6 +97,13 @@ export const CommandBar: React.FC<CommandBarProps> = ({
             && (config.showWhenSelectedMax === undefined || selectedCount <= config.showWhenSelectedMax);
     });
 
+    // Debug logging
+    if (pcfContext?.parameters?.DebugMode?.raw === '1') {
+        console.log('CommandBar: customButtonComponents =', customButtonComponents);
+        console.log('CommandBar: selectedCount =', selectedCount);
+        console.log('CommandBar: visibleCustomButtons =', visibleCustomButtons);
+    }
+
     return (
             <Toolbar
                 aria-label="Dataverse Grid Commands"
