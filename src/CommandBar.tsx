@@ -89,12 +89,24 @@ export const CommandBar: React.FC<CommandBarProps> = ({
     };
 
     const selectedCount = selectedItems.size;
+    const hasResults = items.length > 0;
 
-    // Filter visible custom buttons based on selection count
+    // Filter visible custom buttons based on selection count and empty results
     const visibleCustomButtons = (customButtonComponents || []).filter(buttonComponent => {
         const config = buttonComponent.config;
-        return (config.showWhenSelectedMin === undefined || selectedCount >= config.showWhenSelectedMin)
+        
+        // Check selection count constraints (always apply)
+        const meetsSelectionConstraints = 
+            (config.showWhenSelectedMin === undefined || selectedCount >= config.showWhenSelectedMin)
             && (config.showWhenSelectedMax === undefined || selectedCount <= config.showWhenSelectedMax);
+        
+        // On empty grid, require both showOnEmptyResults AND selection constraints
+        if (!hasResults) {
+            return config.showOnEmptyResults === true && meetsSelectionConstraints;
+        }
+        
+        // On populated grid, only selection constraints matter
+        return meetsSelectionConstraints;
     });
 
     // Debug logging
@@ -148,7 +160,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     </ToolbarButton>
                 )}
 
-                {!hideExportButton && (
+                {!hideExportButton && hasResults && (
                     <ToolbarButton
                         icon={<DownloadIcon />}
                         onClick={handleExport}

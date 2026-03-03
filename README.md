@@ -80,7 +80,7 @@ i.e. <code>[RECORDID]</code>
 - <code>CustomButtonConfig</code> adds one or more custom buttons to the command bar. Accepts either a single button object or an array of button objects. Each button can open a Custom Page or call a web resource function. See <a href="#CustomButtons">Custom Buttons</a> below for complete documentation.
 - <code>HideNewButton</code> hides the built-in <code>+ New</code> button when set to <code>On</code>.
 - <code>HideRefreshButton</code> hides the built-in <code>Refresh</code> button when set to <code>On</code>.
-- <code>HideExportButton</code> hides the built-in <code>Export</code> button when set to <code>On</code>.
+- <code>HideExportButton</code> hides the built-in <code>Export</code> button when set to <code>On</code>. **Note:** The Export button is automatically hidden when the query returns no results, regardless of this setting.
 
 
 ## ColumnLayoutJson
@@ -287,6 +287,7 @@ Set <code>CustomButtonConfig</code> to an **array** of button configuration obje
 | dialogHeight | No | Number | Dialog height as percentage (e.g., `50` for 50%) |
 | showWhenSelectedMin | No | Number | Minimum number of rows that must be selected for button to appear |
 | showWhenSelectedMax | No | Number | Maximum number of rows that can be selected for button to appear |
+| showOnEmptyResults | No | Boolean | If `true`, button will be visible even when query returns no results. **Defaults to `false`** for backward compatibility |
 | autoRefreshDataOnComplete | No | Boolean | If `true`, automatically refreshes the grid data after the button action completes successfully. **Defaults to `false`** for backward compatibility |
 
 ### <a name="available-icons"></a>Available Icons
@@ -339,17 +340,60 @@ You can customize the icon displayed on each button using the `icon` property. A
     "buttonText": "View Details",
     "icon": "Info",
     "customPageName": "new_detailspage"
+  },
+  {
+    "buttonText": "Import Data",
+    "icon": "Document",
+    "customPageName": "new_importpage",
+    "showOnEmptyResults": true,
+    "autoRefreshDataOnComplete": true
   }
 ]
 ```
 
-**Note:** The last button ("View Details") does not have `autoRefreshDataOnComplete` set, so the grid will not refresh after viewing details. The first three buttons will automatically refresh the grid data after their actions complete successfully.
+**Note:** The "Import Data" button has `showOnEmptyResults: true`, so it will be visible even when the grid has no results, allowing users to import data into an empty grid. Other buttons without this property will be hidden when there are no results.
 
 ### Button Visibility Rules
-- If **neither** `showWhenSelectedMin` nor `showWhenSelectedMax` is specified, the button is **always visible**.
-- If `showWhenSelectedMin` is specified, the button only appears when **at least** that many rows are selected.
-- If `showWhenSelectedMax` is specified, the button only appears when **at most** that many rows are selected.
-- Both properties can be used together to define a range (e.g., `"showWhenSelectedMin": 1, "showWhenSelectedMax": 5` shows the button only when 1-5 rows are selected).
+
+Button visibility is controlled by checking **both** selection constraints and empty results behavior:
+
+**Selection Constraints** (always checked):
+- If **neither** `showWhenSelectedMin` nor `showWhenSelectedMax` is specified: No selection constraints (button can show regardless of selection)
+- If `showWhenSelectedMin` is specified: Button requires **at least** that many rows selected
+- If `showWhenSelectedMax` is specified: Button requires **at most** that many rows selected
+- Both can be combined to define a range (e.g., `"showWhenSelectedMin": 1, "showWhenSelectedMax": 5` requires 1-5 rows selected)
+
+**Empty Results Behavior**:
+- **Populated grid** (has rows): `showOnEmptyResults` is ignored, only selection constraints apply
+- **Empty grid** (no rows): **Both** conditions must be true:
+  1. `showOnEmptyResults` must be `true` (defaults to `false`)
+  2. Selection constraints must allow 0 selected items (e.g., `showWhenSelectedMin` is `undefined` or `0`)
+
+**Example Scenarios:**
+- `"showOnEmptyResults": true` (no min/max specified)
+  - Empty grid: ✅ Shows (showOnEmptyResults=true, no selection constraints)
+  - Grid with rows: ✅ Always shows (no selection constraints)
+
+- `"showOnEmptyResults": true, "showWhenSelectedMin": 0`
+  - Empty grid: ✅ Shows (showOnEmptyResults=true, 0 selected meets min=0)
+  - Grid with 0 selected: ✅ Shows (meets min=0)
+  - Grid with 1+ selected: ✅ Shows (meets min=0)
+
+- `"showOnEmptyResults": false, "showWhenSelectedMin": 0`
+  - Empty grid: ❌ Hidden (showOnEmptyResults=false)
+  - Grid with 0 selected: ✅ Shows (meets min=0)
+  - Grid with 1+ selected: ✅ Shows (meets min=0)
+
+- `"showOnEmptyResults": true, "showWhenSelectedMin": 1`
+  - Empty grid: ❌ Hidden (can't select 1 from empty grid)
+  - Grid with 0 selected: ❌ Hidden (doesn't meet min=1)
+  - Grid with 1+ selected: ✅ Shows (meets min=1)
+
+- `"showWhenSelectedMin": 1, "showWhenSelectedMax": 1`
+  - Empty grid: ❌ Hidden (showOnEmptyResults defaults to false)
+  - Grid with 0 selected: ❌ Hidden (doesn't meet min=1)
+  - Grid with 1 selected: ✅ Shows (meets min=1 and max=1)
+  - Grid with 2+ selected: ❌ Hidden (exceeds max=1)
 
 ### Auto-Refresh Feature
 The `autoRefreshDataOnComplete` property controls whether the grid automatically reloads data after a button action completes successfully:
@@ -382,6 +426,36 @@ The `autoRefreshDataOnComplete` property controls whether the grid automatically
 ```
 
 In this example, after the zero balance operation completes, the grid will automatically refresh to show the updated balance values.
+
+### Show on Empty Results Feature
+The `showOnEmptyResults` property controls whether a button is visible when the query returns no results:
+
+- **`showOnEmptyResults: true`** - Button remains visible even when grid has no data
+- **`showOnEmptyResults: false`** or **omitted** - Button is hidden when grid is empty (default behavior for backward compatibility)
+
+**When to use showOnEmptyResults:**
+- ✅ Import/Upload buttons that populate an empty grid
+- ✅ Create/Initialize buttons that set up initial data
+- ✅ Settings or configuration buttons that don't require data
+- ✅ Help or documentation buttons
+
+**When NOT to use showOnEmptyResults:**
+- ❌ Edit, update, or modify buttons that require existing records
+- ❌ Approve/reject workflow buttons that act on selected items
+- ❌ Export buttons that need data to export
+
+**Example:**
+```json
+{
+  "buttonText": "Import Data",
+  "icon": "Document",
+  "customPageName": "new_importpage",
+  "showOnEmptyResults": true,
+  "autoRefreshDataOnComplete": true
+}
+```
+
+In this example, the Import Data button will be visible even when there are no records in the grid, allowing users to import data to populate an empty grid. After the import completes, the grid will automatically refresh to show the newly imported records.
 
 ### Data Passed to Custom Pages and Functions
 
@@ -511,10 +585,41 @@ When using a web resource function, the control passes the same data object as t
 ]
 ```
 
+**Example 3: Buttons that work with empty grids**
+```json
+[
+  {
+    "buttonText": "Import Data",
+    "icon": "Document",
+    "customPageName": "new_importpage",
+    "showOnEmptyResults": true,
+    "autoRefreshDataOnComplete": true
+  },
+  {
+    "buttonText": "Initialize Setup",
+    "icon": "Settings",
+    "customPageName": "new_setuppage",
+    "showOnEmptyResults": true,
+    "autoRefreshDataOnComplete": true
+  },
+  {
+    "buttonText": "Edit Item",
+    "icon": "Edit",
+    "customPageName": "new_editpage",
+    "autoRefreshDataOnComplete": true,
+    "showWhenSelectedMin": 1,
+    "showWhenSelectedMax": 1
+  }
+]
+```
+- "Import Data" and "Initialize Setup" buttons are visible even when the grid is empty
+- "Edit Item" button only appears when one row is selected and will be hidden on empty grids
+
 ### Implementation Notes
 - Each button in the array is independent with its own click handler and configuration
 - Buttons are rendered in the order they appear in the array
 - The component automatically filters which buttons to display based on the current selection count and the `showWhenSelectedMin`/`showWhenSelectedMax` rules
+- By default, custom buttons are hidden when the grid has no results. Use `showOnEmptyResults: true` to keep specific buttons visible on empty grids
 - All buttons use the same data structure for passing context (parentRecordId, selectedRowIds, selectedRecords)
 - When `autoRefreshDataOnComplete` is true, the grid data refreshes automatically after the button action completes successfully (both Custom Pages and web resource functions)
 - **Backward Compatibility:** Existing single-object configurations continue to work without any changes
@@ -522,9 +627,14 @@ When using a web resource function, the control passes the same data object as t
 ### Notes
 - All buttons appear in the grid command bar next to the built-in buttons
 - Multiple buttons are displayed in the order they appear in the configuration array
-- Each button can have different visibility rules based on row selection
+- Each button can have different visibility rules based on row selection and whether results exist
 - The same Custom Page can be reused across multiple buttons with different configurations
 - When no rows are selected, only buttons without `showWhenSelectedMin` will be visible
+- When the grid has no results, only custom buttons with `showOnEmptyResults: true` will be visible
+- **Built-in button behavior on empty results:**
+  - **New** button: Always visible (unless hidden by HideNewButton)
+  - **Refresh** button: Always visible (unless hidden by HideRefreshButton)
+  - **Export** button: Automatically hidden when no results exist (nothing to export)
 ## Initial Configuration Tips
 If you have DebugMode turned on you can see in the console log three important items: `DynamicDetailsList fetchXml` (with the RecordIdPlaceholder replaced), `DynamicDetailsList columnLayout `, and `webAPI.retrieveMultipleRecords : this._allItems` which shows the records returned.
 ![Alt text](img/DebugModeOn-ShowConsoleLog.png)

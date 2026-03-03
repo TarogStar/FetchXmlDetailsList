@@ -61,7 +61,7 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
         }
     };
 
-    if (items.length > 0 && columns && columns.length > 0) {
+    if (columns && columns.length > 0) {
         return (
             <FluentProvider theme={webLightTheme} className="fluent-root">
                 <div className="full-size container">
@@ -80,61 +80,78 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
                     />
 
                     <div className="gridContainer">
-                        {announcedMessage && (
-                            <div className="announcement-bar">
-                                <Text>{announcedMessage}</Text>
-                            </div>
-                        )}
-                        <div className="grid-scroll">
-                            <DataGrid
-                                items={items}
-                                columns={columns}
-                                sortable
-                                selectionMode="multiselect"
-                                getRowId={(item: any) => item.__rowId || item[primaryEntityName + 'id']}
-                                selectedItems={state.selectedRowIds}
-                                onSelectionChange={(_, data) => {
-                                    onSelectionChange(new Set(Array.from(data.selectedItems)));
-                                }}
-                                className="dataverse-grid"
-                                style={{ minWidth: minTableWidth ? `${minTableWidth}px` : undefined }}
-                            >
-                                <DataGridHeader>
-                                    <DataGridRow>
-                                        {(column: any) => (
-                                            <DataGridHeaderCell key={column.columnId}>{column.renderHeaderCell()}</DataGridHeaderCell>
-                                        )}
-                                    </DataGridRow>
-                                </DataGridHeader>
-                                <DataGridBody>
-                                    {({ item, rowId }: any) => (
-                                        <DataGridRow
-                                            key={rowId}
-                                            onClick={(e: React.MouseEvent) => {
-                                                if (e.detail === 2) {
-                                                    e.stopPropagation();
-                                                    openRecord(item);
-                                                }
-                                            }}
-                                            onKeyDown={(e: React.KeyboardEvent) => {
-                                                if (e.key === 'Enter') {
-                                                    openRecord(item);
-                                                }
-                                            }}
-                                        >
-                                            {(column: any) => (
-                                                <DataGridCell key={`${rowId}-${column.columnId}`}>
-                                                    {column.renderCell(item)}
-                                                </DataGridCell>
+                        {items.length > 0 ? (
+                            <>
+                                {announcedMessage && (
+                                    <div className="announcement-bar">
+                                        <Text>{announcedMessage}</Text>
+                                    </div>
+                                )}
+                                <div className="grid-scroll">
+                                    <DataGrid
+                                        items={items}
+                                        columns={columns}
+                                        sortable
+                                        selectionMode="multiselect"
+                                        getRowId={(item: any) => item.__rowId || item[primaryEntityName + 'id']}
+                                        selectedItems={state.selectedRowIds}
+                                        onSelectionChange={(_, data) => {
+                                            onSelectionChange(new Set(Array.from(data.selectedItems)));
+                                        }}
+                                        className="dataverse-grid"
+                                        style={{ minWidth: minTableWidth ? `${minTableWidth}px` : undefined }}
+                                    >
+                                        <DataGridHeader>
+                                            <DataGridRow>
+                                                {(column: any) => (
+                                                    <DataGridHeaderCell key={column.columnId}>{column.renderHeaderCell()}</DataGridHeaderCell>
+                                                )}
+                                            </DataGridRow>
+                                        </DataGridHeader>
+                                        <DataGridBody>
+                                            {({ item, rowId }: any) => (
+                                                <DataGridRow
+                                                    key={rowId}
+                                                    onClick={(e: React.MouseEvent) => {
+                                                        if (e.detail === 2) {
+                                                            e.stopPropagation();
+                                                            openRecord(item);
+                                                        }
+                                                    }}
+                                                    onKeyDown={(e: React.KeyboardEvent) => {
+                                                        if (e.key === 'Enter') {
+                                                            openRecord(item);
+                                                        }
+                                                    }}
+                                                >
+                                                    {(column: any) => (
+                                                        <DataGridCell key={`${rowId}-${column.columnId}`}>
+                                                            {column.renderCell(item)}
+                                                        </DataGridCell>
+                                                    )}
+                                                </DataGridRow>
                                             )}
-                                        </DataGridRow>
-                                    )}
-                                </DataGridBody>
-                            </DataGrid>
-                        </div>
-                        <div className="grid-footer">
-                            <Text>Rows: {items.length}</Text>
-                        </div>
+                                        </DataGridBody>
+                                    </DataGrid>
+                                </div>
+                                <div className="grid-footer">
+                                    <Text>Rows: {items.length}</Text>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="no-data-message" style={{ 
+                                    padding: '40px 20px', 
+                                    textAlign: 'center',
+                                    color: '#605E5C'
+                                }}>
+                                    <Text size={400}>{announcedMessage || 'Query returned no results.'}</Text>
+                                </div>
+                                <div className="grid-footer">
+                                    <Text>Rows: 0</Text>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </FluentProvider>

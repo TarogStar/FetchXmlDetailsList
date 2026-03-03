@@ -36,6 +36,7 @@ export interface ICustomButtonConfig {
     showWhenSelectedMax?: number;
     icon?: CustomIconType; // Optional icon name (defaults to 'Add' if not specified)
     autoRefreshDataOnComplete?: boolean; // If true, automatically refreshes the grid data after the button action completes successfully
+    showOnEmptyResults?: boolean; // If true, button will be visible even when query returns no results (defaults to false)
 }
 
 // Component that combines button configuration with its click handler
