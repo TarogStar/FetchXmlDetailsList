@@ -67,7 +67,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                 }
             } catch (e) {
                 // Silent fallback — keep the heuristic name
-                if (pcfContext?.parameters?.DebugMode?.raw === '1') {
+                if (process.env.NODE_ENV !== 'production') {
                     // eslint-disable-next-line no-console
                     console.log('Failed to get entity metadata display name:', e);
                 }
@@ -110,7 +110,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
     });
 
     // Debug logging
-    if (pcfContext?.parameters?.DebugMode?.raw === '1') {
+    if (process.env.NODE_ENV !== 'production') {
         console.log('CommandBar: customButtonComponents =', customButtonComponents);
         console.log('CommandBar: selectedCount =', selectedCount);
         console.log('CommandBar: visibleCustomButtons =', visibleCustomButtons);
@@ -183,8 +183,10 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                                 <MenuItem
                                     onClick={() => {
                                         // Placeholder for bulk operations
-                                        // eslint-disable-next-line no-console
-                                        console.log('Bulk operations for:', Array.from(selectedItems));
+                                        if (process.env.NODE_ENV !== 'production') {
+                                            // eslint-disable-next-line no-console
+                                            console.log('Bulk operations for:', Array.from(selectedItems));
+                                        }
                                     }}
                                 >
                                     Bulk Edit ({selectedItems.size} selected)

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest>
   <!-- Manifest schema reference: https://learn.microsoft.com/en-us/power-apps/developer/component-framework/manifest-schema-reference/ -->
-  <control namespace="GLI" constructor="FetchXmlDetailsList" version="0.0.47" display-name-key="FetchXml DetailsList" description-key="Control generates a FluentUI DetailsList for subgrids loaded via a custom FetchXml query and column layout" control-type="virtual" preview-image="../img/Preview.png">
+  <control namespace="GLI" constructor="FetchXmlDetailsList" version="0.0.50" display-name-key="FetchXml DetailsList" description-key="Control generates a FluentUI DetailsList for subgrids loaded via a custom FetchXml query and column layout" control-type="virtual" preview-image="../img/Preview.png">
     <!--external-service-usage node declares whether this 3rd party PCF control is using external service or not, if yes, this control will be considered as premium and please also add the external domain it is using.
     If it is not using any external service, please set the enabled="false" and DO NOT add any domain below. The "enabled" will be false by default.
     Example1:
@@ -43,10 +43,6 @@
     <property name="OverriddenRecordIdFieldName" display-name-key="Overridden RecordId" description-key="Optional lookup used for RecordId" of-type="Lookup.Simple" usage="input" required="false" />
     <property name="ColumnLayoutJson" display-name-key="Column Layout Json" description-key="Json list of Columns (name, fieldName)" of-type="Multiple" usage="input" required="true" />
     <property name="ItemsPerPage" display-name-key="Items Per Page" description-key="Items Per Page (Defaults to 5000)" of-type="Whole.None" usage="input" required="false" default-value="5000" />
-    <property name="DebugMode" display-name-key="Run in Debug Mode" description-key="Write extra details to console.log" of-type="Enum" usage="input" required="false">
-      <value name="Off" display-name-key="Off" description-key="Do NOT run in Debug Mode" default="true">0</value>
-      <value name="On" display-name-key="On" description-key="Run in Debug Mode">1</value>
-    </property>
     <property name="HideNewButton" display-name-key="Hide New Button" description-key="Hide the built-in + New button" of-type="Enum" usage="input" required="false">
       <value name="Off" display-name-key="Off" description-key="Show New button" default="true">0</value>
       <value name="On" display-name-key="On" description-key="Hide New button">1</value>

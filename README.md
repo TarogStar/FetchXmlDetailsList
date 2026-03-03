@@ -76,7 +76,6 @@ i.e. <code>[RECORDID]</code>
 
 - <code>ColumnLayoutJson</code> is a collection of columns used for the table layout.  See details below.
 - <code>ItemsPerPage</code> is defaults to 5000 as paging is currently not implemented.  // [NOT SUPPORTED CURRENTLY] ItemsPerPage is how many items to show per page. For now this is set at 5000 since paging and sorting seem to be at odds with each other.
-- <code>DebugMode</code> can be set to <code>On</code> or <code>Off</code>.  When enabled, this will write extra details to console, break when entering the main control, and break on handled exceptions.
 - <code>CustomButtonConfig</code> adds one or more custom buttons to the command bar. Accepts either a single button object or an array of button objects. Each button can open a Custom Page or call a web resource function. See <a href="#CustomButtons">Custom Buttons</a> below for complete documentation.
 - <code>HideNewButton</code> hides the built-in <code>+ New</code> button when set to <code>On</code>.
 - <code>HideRefreshButton</code> hides the built-in <code>Refresh</code> button when set to <code>On</code>.
@@ -636,8 +635,8 @@ When using a web resource function, the control passes the same data object as t
   - **Refresh** button: Always visible (unless hidden by HideRefreshButton)
   - **Export** button: Automatically hidden when no results exist (nothing to export)
 ## Initial Configuration Tips
-If you have DebugMode turned on you can see in the console log three important items: `DynamicDetailsList fetchXml` (with the RecordIdPlaceholder replaced), `DynamicDetailsList columnLayout `, and `webAPI.retrieveMultipleRecords : this._allItems` which shows the records returned.
-![Alt text](img/DebugModeOn-ShowConsoleLog.png)
+
+**Debug Logging:** When building the component in DEBUG mode (e.g., `npm run build` or `pcf-scripts build --configuration Debug`), detailed console logging is enabled showing FetchXml queries, column layouts, and API responses. In RELEASE builds, all debug logging is automatically stripped out for optimal performance.
 
 ***
 
@@ -695,7 +694,7 @@ You may have to change the path to match where your MSBuild.dll lives.  For me i
 # Notes
 ## Response Details
 The response to the FetchXml get multiple query should have details in it which we need for the rendering to work.  Essentially the Xrm Web Api sets the headers and returns details we can work with.
-`prefer: odata.include-annotations="*"`  Enable DebugMode and check the F11 console log.  This will give you a good idea how to include columns for the ColumnLayoutJson.
+`prefer: odata.include-annotations="*"`  Build the component in DEBUG mode and check the F12 console log.  This will give you a good idea how to include columns for the ColumnLayoutJson.
 
 # Issues
 

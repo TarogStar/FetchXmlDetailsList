@@ -13,7 +13,6 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
     private _primaryEntityName: string;
     private _fetchXml: string;
     private _announcedMessage?: string;
-    private _isDebugMode: boolean;
     private _baseEnvironmentUrl?: string;
     private dataService: DataService;
     private _customButtonConfigs: ICustomButtonConfig[] = [];
@@ -71,7 +70,6 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
             column,
             primaryEntityName: this._primaryEntityName,
             baseEnvironmentUrl: this._baseEnvironmentUrl,
-            isDebugMode: this._isDebugMode,
             pcfContext: this._pcfContext,
             onCellClick: this.handleCellClick
         });
@@ -84,7 +82,6 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
         this._primaryEntityName = props.primaryEntityName || '';
         this._fetchXml = props.fetchXml ?? '';
         this._allItems = props.items || [];
-        this._isDebugMode = props.isDebugMode || false;
         this._baseEnvironmentUrl = props.baseD365Url;
 
         // Parse custom button configuration(s) from JSON string
@@ -95,7 +92,7 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
                 this._customButtonConfigs = Array.isArray(parsed) ? parsed : [parsed];
                 this._customButtonComponents = this.createCustomButtonComponents();
                 
-                if (this._isDebugMode) {
+                if (process.env.NODE_ENV !== 'production') {
                     console.log('DynamicDetailsList constructor: CustomButtonConfig raw =', props.CustomButtonConfig);
                     console.log('DynamicDetailsList constructor: parsed =', parsed);
                     console.log('DynamicDetailsList constructor: _customButtonConfigs =', this._customButtonConfigs);
@@ -115,7 +112,7 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
             this._legacyColumns = [];
         }
 
-        this.dataService = new DataService(this._pcfContext, this._isDebugMode);
+        this.dataService = new DataService(this._pcfContext);
 
         this.state = {
             items: this.ensureRowIds(this._allItems || [], this._primaryEntityName),
@@ -235,7 +232,7 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
                 
                 // If autoRefreshDataOnComplete is enabled, refresh the grid data after successful completion
                 if (buttonConfig.autoRefreshDataOnComplete === true) {
-                    if (this._isDebugMode) {
+                    if (process.env.NODE_ENV !== 'production') {
                         console.log('Auto-refreshing grid data after button action');
                     }
                     this.loadData();
@@ -247,7 +244,7 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
     }
 
     private createCustomButtonComponents = (): ICustomButtonComponent[] => {
-        if (this._isDebugMode) {
+        if (process.env.NODE_ENV !== 'production') {
             console.log('createCustomButtonComponents: _customButtonConfigs =', this._customButtonConfigs);
         }
         return this._customButtonConfigs.map(config => ({

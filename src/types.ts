@@ -54,7 +54,6 @@ export interface IDynamicDetailsListProps {
     baseEnvironmentUrl?: string;
     context?: any;
     primaryEntityName?: string;
-    isDebugMode?: boolean;
     baseD365Url?: string;
     dataItems?: any[];
     CustomButtonConfig?: string | null; // JSON string containing ICustomButtonConfig
