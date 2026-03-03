@@ -92,9 +92,17 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
         if (props.CustomButtonConfig) {
             try {
                 const parsed = JSON.parse(props.CustomButtonConfig);
-                this._customButtonConfigs = Array.isArray(parsed) ? parsed : [parsed];
+                const configs = Array.isArray(parsed) ? parsed : [parsed];
+                const validConfigs = configs.filter(
+                    (cfg: unknown) => cfg !== null && typeof cfg === 'object' && !Array.isArray(cfg)
+                ) as ICustomButtonConfig[];
+
+                if (validConfigs.length === 0) {
+                    throw new Error('No valid custom button configurations found.');
+                }
+
+                this._customButtonConfigs = validConfigs;
                 this._customButtonComponents = this.createCustomButtonComponents();
-                
                 if (this._isDebugMode) {
                     console.log('DynamicDetailsList constructor: CustomButtonConfig raw =', props.CustomButtonConfig);
                     console.log('DynamicDetailsList constructor: parsed =', parsed);
