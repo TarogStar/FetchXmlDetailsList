@@ -54,7 +54,9 @@ export function convertToTableColumns(
             columnId: column.key || column.fieldName,
             renderHeaderCell: () => React.createElement('span', {
                 title: column.name,
-                style: { fontWeight: 'bold' }
+                style: { fontWeight: 'bold' },
+                // Trying to match the minWidth and maxWidth from legacy columns to FluentUI v9 TableColumnDefinition
+                // style: { fontWeight: 'bold', minWidth: column.minWidth, maxWidth: column.maxWidth }
             }, column.name),
             renderCell: (item: any) => renderItemColumn(item, undefined, column),
             compare: (a: any, b: any) => compareValues(a, b, column),

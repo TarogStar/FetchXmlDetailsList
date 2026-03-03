@@ -668,8 +668,8 @@ The sample FetchXml starts on an Account record and shows any connected Contacts
 You can choose between a sample Contract dataset or Connections dataset by swapping out the lines in the *\src\GetSampleData.ts*.
 ```Typescript
 // Use these two lines for Sample Contract dataset
-//import * as sampleResponseData from './data/sample.Contracts.Response.webapi.json';
-//import * as sampleResponseColumnLayout from './data/sample.Contracts.columnLayout.webapi.json';
+import * as sampleResponseData from './data/sample.Contracts.Response.webapi.json';
+import * as sampleResponseColumnLayout from './data/sample.Contracts.columnLayout.webapi.json';
 
 // Use these two lines for Sample Connections dataset
 import * as sampleResponseData from './data/sample.Connections.Response.webapi.json';

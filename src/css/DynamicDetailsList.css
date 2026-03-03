@@ -1,3 +1,5 @@
+
+
 .fluent-root {
     width: 100%;
     height: 100%;
@@ -55,7 +57,9 @@
 /* FluentUI v9 DataGrid styling to match Dataverse OOB grids */
 .dataverse-grid {
     font-family: "Segoe UI", "Fira Sans", Roboto, "Helvetica Neue", Arial, sans-serif;
-    font-size: 14px;
+    /* Reduce the font size to make more rows visible */
+    /* font-size: 14px; */
+    font-size: 13px;
     line-height: 20px;
     border: 1px solid #e5e5e5;
     background-color: #ffffff;
@@ -68,8 +72,11 @@
 
 .dataverse-grid .fui-DataGrid__row {
     border-bottom: 1px solid #e5e5e5;
-    min-height: 36px;
-    height: 36px;
+    /* Reducing the height of the row to make more rows visible */
+    /* min-height: 36px; */
+    /* height: 36px; */
+    min-height: 20px;
+    height: 20px;
 }
 
 .dataverse-grid .fui-DataGrid__row:hover {
@@ -118,7 +125,9 @@
 
 .dataverse-grid .fui-DataGrid__cell {
     border-right: 1px solid #e5e5e5;
-    padding: 8px 12px;
+    /* Reduce the padding of the cell to make more rows visible */
+    /* padding: 8px 12px; */
+    padding: 4px 6px;
     color: #323130;
     vertical-align: middle;
     white-space: nowrap;
@@ -126,6 +135,8 @@
     text-overflow: ellipsis;
     max-width: 1px;
     min-width: 0;
+    /* Reduce the height of the cell to make more rows visible */
+    min-height: 20px;
 }
 
 .dataverse-grid .fui-TableCellLayout {
@@ -228,3 +239,27 @@
     border-bottom: 2px solid #e5e5e5;
     border-right: 1px solid #e5e5e5;
 }
+
+
+/* Trying to fix the resizing of the columns not working 
+ Various unsuccessful attempts to make the columns resizable and not shrink to fit the content */
+/*
+#TestControl-pcf-container-id .fui-DataGridHeaderCell,
+#TestControl-pcf-container-id .fui-DataGridRow > [role="gridcell"] {
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  flex-basis: auto !important;
+}
+
+#TestControl-pcf-container-id .fui-DataGridHeaderCell {
+  max-width: none !important;
+}
+
+#TestControl-pcf-container-id .fui-DataGridRow [role="gridcell"] {
+  max-width: none !important;
+}
+
+.fui-DataGrid {
+  min-width: max-content;
+}
+*/

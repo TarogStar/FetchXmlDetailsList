@@ -90,6 +90,9 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
                                 items={items}
                                 columns={columns}
                                 sortable
+                                // Allow users to resize columns
+                                resizableColumns={true}
+                                // resizableColumnsOptions={{ autoFitColumns: true  }}
                                 selectionMode="multiselect"
                                 getRowId={(item: any) => item.__rowId || item[primaryEntityName + 'id']}
                                 selectedItems={state.selectedRowIds}
