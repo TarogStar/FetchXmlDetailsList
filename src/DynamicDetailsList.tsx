@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { TableRowId } from '@fluentui/react-components';
-import { IDynamicDetailsListProps, IDynamicDetailsListState, ILegacyColumn, ICustomButtonConfig, IColumnDataStructure } from './types';
+import { IDynamicDetailsListProps, IDynamicDetailsListState, ILegacyColumn, ICustomButtonConfig, ICustomButtonComponent, IColumnDataStructure } from './types';
 import { DataService } from './dataService';
 import { renderItemColumn } from './CellRenderer';
 import { DataGridWrapper } from './DataGridWrapper';
@@ -16,7 +16,8 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
     private _isDebugMode: boolean;
     private _baseEnvironmentUrl?: string;
     private dataService: DataService;
-    private _customButtonConfig?: ICustomButtonConfig;
+    private _customButtonConfigs: ICustomButtonConfig[] = [];
+    private _customButtonComponents: ICustomButtonComponent[] = [];
 
     // Cache legacy columns for min width calculation
     private _legacyColumns: ILegacyColumn[] = [];
@@ -86,12 +87,32 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
         this._isDebugMode = props.isDebugMode || false;
         this._baseEnvironmentUrl = props.baseD365Url;
 
-        // Parse custom button configuration from JSON string
+        // Parse custom button configuration(s) from JSON string
+        // Supports both single object and array format
         if (props.CustomButtonConfig) {
             try {
-                this._customButtonConfig = JSON.parse(props.CustomButtonConfig);
+                const parsed = JSON.parse(props.CustomButtonConfig);
+                const configs = Array.isArray(parsed) ? parsed : [parsed];
+                const validConfigs = configs.filter(
+                    (cfg: unknown) => cfg !== null && typeof cfg === 'object' && !Array.isArray(cfg)
+                ) as ICustomButtonConfig[];
+
+                if (validConfigs.length === 0) {
+                    throw new Error('No valid custom button configurations found.');
+                }
+
+                this._customButtonConfigs = validConfigs;
+                this._customButtonComponents = this.createCustomButtonComponents();
+                if (this._isDebugMode) {
+                    console.log('DynamicDetailsList constructor: CustomButtonConfig raw =', props.CustomButtonConfig);
+                    console.log('DynamicDetailsList constructor: parsed =', parsed);
+                    console.log('DynamicDetailsList constructor: _customButtonConfigs =', this._customButtonConfigs);
+                    console.log('DynamicDetailsList constructor: _customButtonComponents =', this._customButtonComponents);
+                }
             } catch (error) {
                 console.error('Failed to parse custom button configuration:', error);
+                this._customButtonConfigs = [];
+                this._customButtonComponents = [];
             }
         }
 
@@ -139,13 +160,17 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
         if (prevProps.CustomButtonConfig !== this.props.CustomButtonConfig) {
             if (this.props.CustomButtonConfig) {
                 try {
-                    this._customButtonConfig = JSON.parse(this.props.CustomButtonConfig);
+                    const parsed = JSON.parse(this.props.CustomButtonConfig);
+                    this._customButtonConfigs = Array.isArray(parsed) ? parsed : [parsed];
+                    this._customButtonComponents = this.createCustomButtonComponents();
                 } catch (error) {
                     console.error('Failed to parse custom button configuration:', error);
-                    this._customButtonConfig = undefined;
+                    this._customButtonConfigs = [];
+                    this._customButtonComponents = [];
                 }
             } else {
-                this._customButtonConfig = undefined;
+                this._customButtonConfigs = [];
+                this._customButtonComponents = [];
             }
         }
 
@@ -197,8 +222,8 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
         this.loadData();
     }
 
-    private handleCustomButtonClick = async () => {
-        if (this._customButtonConfig) {
+    private createCustomButtonClickHandler = (buttonConfig: ICustomButtonConfig) => {
+        return async () => {
             try {
                 // Use the record ID that's already passed from the main component
                 const recordId = this.props.recordId;
@@ -214,11 +239,29 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
                     selectedRecords
                 };
 
-                await openCustomPage(this._customButtonConfig, this._pcfContext, recordId, customButtonData);
+                await openCustomPage(buttonConfig, this._pcfContext, recordId, customButtonData);
+                
+                // If autoRefreshDataOnComplete is enabled, refresh the grid data after successful completion
+                if (buttonConfig.autoRefreshDataOnComplete === true) {
+                    if (this._isDebugMode) {
+                        console.log('Auto-refreshing grid data after button action');
+                    }
+                    this.loadData();
+                }
             } catch (error) {
                 console.error('Failed to open custom page:', error);
             }
+        };
+    }
+
+    private createCustomButtonComponents = (): ICustomButtonComponent[] => {
+        if (this._isDebugMode) {
+            console.log('createCustomButtonComponents: _customButtonConfigs =', this._customButtonConfigs);
         }
+        return this._customButtonConfigs.map(config => ({
+            config,
+            onClick: this.createCustomButtonClickHandler(config)
+        }));
     }
 
     // Compute total minimum width for horizontal scrolling
@@ -239,8 +282,7 @@ export class DynamicDetailsList extends React.Component<IDynamicDetailsListProps
                     });
                 }}
                 onRefresh={this.handleRefresh}
-                customButtonConfig={this._customButtonConfig}
-                onCustomButtonClick={this.handleCustomButtonClick}
+                customButtonComponents={this._customButtonComponents}
                 minTableWidth={this.getTotalMinWidth()}
                 legacyColumns={this._legacyColumns}
                 hideNewButton={this.props.hideNewButton}

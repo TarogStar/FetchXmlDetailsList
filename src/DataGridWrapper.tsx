@@ -13,7 +13,7 @@ import {
     Spinner,
     TableRowId
 } from '@fluentui/react-components';
-import { IDynamicDetailsListState, ICustomButtonConfig, ILegacyColumn } from './types';
+import { IDynamicDetailsListState, ICustomButtonComponent, ILegacyColumn } from './types';
 import { CommandBar } from './CommandBar';
 
 export interface DataGridWrapperProps {
@@ -22,8 +22,7 @@ export interface DataGridWrapperProps {
     pcfContext: any;
     onSelectionChange: (selectedItems: Set<TableRowId>) => void;
     onRefresh: () => void;
-    customButtonConfig?: ICustomButtonConfig;
-    onCustomButtonClick?: () => void;
+    customButtonComponents?: ICustomButtonComponent[];
     minTableWidth?: number;
     legacyColumns?: ILegacyColumn[];
     hideNewButton?: boolean;
@@ -38,8 +37,7 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
     pcfContext,
     onSelectionChange,
     onRefresh,
-    customButtonConfig,
-    onCustomButtonClick,
+    customButtonComponents,
     minTableWidth,
     legacyColumns,
     hideNewButton,
@@ -73,8 +71,7 @@ export const DataGridWrapper: React.FC<DataGridWrapperProps> = ({
                         items={items}
                         selectedItems={state.selectedRowIds}
                         onRefresh={onRefresh}
-                        customButtonConfig={customButtonConfig}
-                        onCustomButtonClick={onCustomButtonClick}
+                        customButtonComponents={customButtonComponents}
                         legacyColumns={legacyColumns}
                         hideNewButton={hideNewButton}
                         hideRefreshButton={hideRefreshButton}

@@ -1,4 +1,5 @@
 import { TableColumnDefinition, TableRowId } from '@fluentui/react-components';
+import { CustomIconType } from './icons/CustomIcons';
 
 // Interface for FluentUI v8 style column (what we receive from JSON)
 export interface ILegacyColumn {
@@ -33,6 +34,14 @@ export interface ICustomButtonConfig {
     dialogHeight?: number;
     showWhenSelectedMin?: number;
     showWhenSelectedMax?: number;
+    icon?: CustomIconType; // Optional icon name (defaults to 'Add' if not specified)
+    autoRefreshDataOnComplete?: boolean; // If true, automatically refreshes the grid data after the button action completes successfully
+}
+
+// Component that combines button configuration with its click handler
+export interface ICustomButtonComponent {
+    config: ICustomButtonConfig;
+    onClick: () => void;
 }
 
 export interface IDynamicDetailsListProps {
