@@ -7,7 +7,6 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
     private _primaryEntityName: string;
     private _fetchXML: string | null;
     private _columnLayout: Array<TableColumnDefinition<any>>;
-    private _isDebugMode: boolean;
     private _baseEnvironmentUrl?: string;
     private _recordId: string;
 
@@ -37,17 +36,6 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
 
     private initVars(context: ComponentFramework.Context<IInputs>): void {
         this._context = context;
-        this._isDebugMode = false;
-        
-        if (this._context.parameters.DebugMode) {
-            this._isDebugMode = this._context.parameters.DebugMode.raw === "1";
-        }
-
-        // If you want this to break every time you set isDebugMode to true
-        //if (this._isDebugMode) { 
-        //    debugger;  // eslint-disable-line no-debugger        
-        //}
-
         
         // TODO: Validate the input parameters to make sure we get a friendly error instead of weird errors
         let fetchXML : string | null = this._context.parameters.FetchXml.raw;
@@ -69,7 +57,7 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
         const overriddenRecordId = this._context.parameters.OverriddenRecordIdFieldName?.raw;
         if (overriddenRecordId && overriddenRecordId.length > 0 && overriddenRecordId[0]?.id) {
             recordId = overriddenRecordId[0].id;
-            if (this._isDebugMode){
+            if (process.env.NODE_ENV !== 'production'){
                 console.log(`OverriddenRecordIdFieldName value used: ${recordId}.`)
             }
         }
@@ -146,7 +134,6 @@ export class FetchXmlDetailsList implements ComponentFramework.ReactControl<IInp
             columns: this._columnLayout,
             primaryEntityName: this._primaryEntityName,
             fetchXml: this._fetchXML,
-            isDebugMode: this._isDebugMode,
             context: context,
             baseD365Url: this._baseEnvironmentUrl,
             CustomButtonConfig: context.parameters.CustomButtonConfig?.raw,

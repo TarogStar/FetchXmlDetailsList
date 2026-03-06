@@ -12,11 +12,9 @@ export interface DataServiceResult {
 
 export class DataService {
     private pcfContext: any;
-    private isDebugMode: boolean;
 
-    constructor(pcfContext: any, isDebugMode: boolean = false) {
+    constructor(pcfContext: any) {
         this.pcfContext = pcfContext;
-        this.isDebugMode = isDebugMode;
     }
 
     async fetchData(
@@ -33,7 +31,7 @@ export class DataService {
 
         const isAuthoringMode = !!this.pcfContext?.mode?.isAuthoring;
 
-        if (this.isDebugMode) {
+        if (process.env.NODE_ENV !== 'production') {
             console.log("DataService primaryEntityName", primaryEntityName);
             console.log("DataService fetchXml", fetchXml);
             console.log("DataService columnLayout", tableColumns);
@@ -71,7 +69,7 @@ export class DataService {
                 );
 
                 if (results && results.entities && results.entities.length > 0) {
-                    if (this.isDebugMode) {
+                    if (process.env.NODE_ENV !== 'production') {
                         console.log('webAPI.retrieveMultipleRecords : results.entities', results.entities);
                     }
                     return {
@@ -89,7 +87,7 @@ export class DataService {
                     };
                 }
             } catch (error: any) {
-                if (this.isDebugMode) {
+                if (process.env.NODE_ENV !== 'production') {
                     console.log(error);
                 }
                 return {

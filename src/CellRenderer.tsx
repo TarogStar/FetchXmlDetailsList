@@ -16,7 +16,6 @@ export interface CellRendererProps {
     column: ILegacyColumn;
     primaryEntityName: string;
     baseEnvironmentUrl?: string;
-    isDebugMode: boolean;
     pcfContext: any;
     onCellClick: (item: any, column: ILegacyColumn, event: React.MouseEvent) => void;
 }
@@ -54,7 +53,7 @@ function handleCellClick(props: CellRendererProps, event: React.MouseEvent): voi
 }
 
 function renderItem(props: CellRendererProps, fieldContent: any): any {
-    const { item, column, baseEnvironmentUrl, isDebugMode, pcfContext, primaryEntityName } = props;
+    const { item, column, baseEnvironmentUrl, pcfContext, primaryEntityName } = props;
     const itemKey = item.__rowId || item[primaryEntityName + 'id'] || column.key;
 
     if (item[column.key] || fieldContent) {
@@ -68,7 +67,7 @@ function renderItem(props: CellRendererProps, fieldContent: any): any {
                 return (<span>{format(dateValue, dateFormat)}</span>);
             }
             catch (ex) {
-                if (isDebugMode) {
+                if (process.env.NODE_ENV !== 'production') {
                     console.log(ex);
                 }
                 // ignore error and just render as-is

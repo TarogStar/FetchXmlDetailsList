@@ -67,7 +67,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                 }
             } catch (e) {
                 // Silent fallback — keep the heuristic name
-                if (pcfContext?.parameters?.DebugMode?.raw === '1') {
+                if (process.env.NODE_ENV !== 'production') {
                     // eslint-disable-next-line no-console
                     console.log('Failed to get entity metadata display name:', e);
                 }
@@ -89,16 +89,28 @@ export const CommandBar: React.FC<CommandBarProps> = ({
     };
 
     const selectedCount = selectedItems.size;
+    const hasResults = items.length > 0;
 
-    // Filter visible custom buttons based on selection count
+    // Filter visible custom buttons based on selection count and empty results
     const visibleCustomButtons = (customButtonComponents || []).filter(buttonComponent => {
         const config = buttonComponent.config;
-        return (config.showWhenSelectedMin === undefined || selectedCount >= config.showWhenSelectedMin)
+        
+        // Check selection count constraints (always apply)
+        const meetsSelectionConstraints = 
+            (config.showWhenSelectedMin === undefined || selectedCount >= config.showWhenSelectedMin)
             && (config.showWhenSelectedMax === undefined || selectedCount <= config.showWhenSelectedMax);
+        
+        // On empty grid, require both showOnEmptyResults AND selection constraints
+        if (!hasResults) {
+            return config.showOnEmptyResults === true && meetsSelectionConstraints;
+        }
+        
+        // On populated grid, only selection constraints matter
+        return meetsSelectionConstraints;
     });
 
     // Debug logging
-    if (pcfContext?.parameters?.DebugMode?.raw === '1') {
+    if (process.env.NODE_ENV !== 'production') {
         console.log('CommandBar: customButtonComponents =', customButtonComponents);
         console.log('CommandBar: selectedCount =', selectedCount);
         console.log('CommandBar: visibleCustomButtons =', visibleCustomButtons);
@@ -148,7 +160,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     </ToolbarButton>
                 )}
 
-                {!hideExportButton && (
+                {!hideExportButton && hasResults && (
                     <ToolbarButton
                         icon={<DownloadIcon />}
                         onClick={handleExport}
@@ -171,8 +183,10 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                                 <MenuItem
                                     onClick={() => {
                                         // Placeholder for bulk operations
-                                        // eslint-disable-next-line no-console
-                                        console.log('Bulk operations for:', Array.from(selectedItems));
+                                        if (process.env.NODE_ENV !== 'production') {
+                                            // eslint-disable-next-line no-console
+                                            console.log('Bulk operations for:', Array.from(selectedItems));
+                                        }
                                     }}
                                 >
                                     Bulk Edit ({selectedItems.size} selected)
